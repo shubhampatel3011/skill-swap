@@ -1,29 +1,71 @@
 var MyConnection = require("../DBConnector/DBConnection");
 
-class skillTbl {
-  // insert data
-  async AddSkill(Model) {
+class swapRequestTbl {
+  async AddRequest(Model) {
     const db = await MyConnection();
+
     const [result] = await db.execute(
-      `INSERT INTO skillTbl
-            (SkillToLearn, Category, Description, Mode)
-            VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO swapRequestTbl
+      (SenderId, ReceiverId, OfferedSkillId,
+      RequestedSkillId, Message, Status, ScheduledDate)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
-        Model.Title,
-        Model.Category,
-        Model.Description,
-        Model.ExperienceLevel,
-        Model.Availibility,
-        Model.Mode,
+        Model.senderId,
+        Model.receiverId,
+        Model.offeredSkillId,
+        Model.requestedSkillId,
+        Model.message,
+        Model.status || "pending",
+        Model.scheduledDate,
       ],
     );
+
     db.end();
-    if (result) {
-      console.log(result);
-      return "Your Data is successfully stored.";
-    }
-    else {
-      return "Somethin is wrong in the DB";
-    }
+    return result;
+  }
+
+  async GetList() {
+    const db = await MyConnection();
+    const [result] = await db.execute("SELECT * FROM swapRequestTbl");
+    db.end();
+    return result;
+  }
+
+  async GetById(id) {
+    const db = await MyConnection();
+    const [result] = await db.execute(
+      "SELECT * FROM swapRequestTbl WHERE swapId=?",
+      [id],
+    );
+    db.end();
+    return result;
+  }
+
+  async UpdateStatus(id, status) {
+    const db = await MyConnection();
+
+    const [result] = await db.execute(
+      `UPDATE swapRequestTbl
+      SET Status=?
+      WHERE swapId=?`,
+      [status, id],
+    );
+
+    db.end();
+    return result;
+  }
+
+  async DeleteRequest(id) {
+    const db = await MyConnection();
+
+    const [result] = await db.execute(
+      "DELETE FROM swapRequestTbl WHERE swapId=?",
+      [id],
+    );
+
+    db.end();
+    return result;
   }
 }
+
+module.exports = swapRequestTbl;

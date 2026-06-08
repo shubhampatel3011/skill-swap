@@ -98,6 +98,11 @@ const Navbar = () => {
                       </Link>
                     </li>
                     <li>
+                      <Link className="dropdown-item" to="/feedback">
+                        <i className="bi bi-chat-left-text me-2"></i>Give Feedback
+                      </Link>
+                    </li>
+                    <li>
                       <hr className="dropdown-divider" />
                     </li>
                     <li>

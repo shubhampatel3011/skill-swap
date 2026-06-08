@@ -356,6 +356,46 @@ export const CATEGORIES = [
   "Other",
 ];
 
+export const MOCK_CATEGORIES = [
+  { _id: "cat1", name: "Technology", icon: "bi-cpu", description: "Coding, software, networking, hardware, and web technologies.", status: "Active", createdAt: "2024-01-01T10:00:00Z" },
+  { _id: "cat2", name: "Creative Arts", icon: "bi-palette", description: "Design, photography, writing, illustration, and digital arts.", status: "Active", createdAt: "2024-01-02T10:00:00Z" },
+  { _id: "cat3", name: "Music", icon: "bi-music-note-beamed", description: "Vocals, instruments, synthesis, and music production.", status: "Active", createdAt: "2024-01-03T10:00:00Z" },
+  { _id: "cat4", name: "Languages", icon: "bi-translate", description: "Foreign languages, grammar, pronunciation, and dialogue.", status: "Active", createdAt: "2024-01-04T10:00:00Z" },
+  { _id: "cat5", name: "Health & Wellness", icon: "bi-heart-pulse", description: "Yoga, meditation, physical fitness, nutrition, and mental health.", status: "Active", createdAt: "2024-01-05T10:00:00Z" },
+  { _id: "cat6", name: "Business", icon: "bi-briefcase", description: "Entrepreneurship, marketing, sales, accounting, and finance.", status: "Active", createdAt: "2024-01-06T10:00:00Z" },
+  { _id: "cat7", name: "Education", icon: "bi-mortarboard", description: "Mathematics, science, history, academic tutoring, and coaching.", status: "Active", createdAt: "2024-01-07T10:00:00Z" },
+  { _id: "cat8", name: "Cooking", icon: "bi-egg-fried", description: "Culinary arts, baking, meal prep, and international cuisines.", status: "Active", createdAt: "2024-01-08T10:00:00Z" },
+  { _id: "cat9", name: "Sports & Fitness", icon: "bi-dribbble", description: "Athletics, sports techniques, stamina training, and endurance.", status: "Active", createdAt: "2024-01-09T10:00:00Z" },
+  { _id: "cat10", name: "Other", icon: "bi-three-dots", description: "General skills, hobbies, lifestyle tips, and miscellaneous.", status: "Active", createdAt: "2024-01-10T10:00:00Z" },
+];
+
+export const MOCK_SUBCATEGORIES = [
+  { _id: "sub1", categoryId: "cat1", name: "Web Development", description: "Building website frontends, backends, and databases.", status: "Active", createdAt: "2024-01-15T10:00:00Z" },
+  { _id: "sub2", categoryId: "cat1", name: "Mobile Development", description: "Creating Android and iOS mobile applications.", status: "Active", createdAt: "2024-01-15T11:00:00Z" },
+  { _id: "sub3", categoryId: "cat1", name: "Data Science", description: "Data analysis, machine learning, and business intelligence.", status: "Active", createdAt: "2024-01-15T12:00:00Z" },
+  { _id: "sub4", categoryId: "cat2", name: "Photography", description: "Capturing, editing, and producing photographs.", status: "Active", createdAt: "2024-01-16T10:00:00Z" },
+  { _id: "sub5", categoryId: "cat2", name: "Graphic Design", description: "Creating logos, flyers, social media assets, and UX design.", status: "Active", createdAt: "2024-01-16T11:00:00Z" },
+  { _id: "sub6", categoryId: "cat3", name: "Vocals", description: "Singing techniques, pitch control, and vocal performance.", status: "Active", createdAt: "2024-01-17T10:00:00Z" },
+  { _id: "sub7", categoryId: "cat3", name: "Instruments", description: "Learning to play guitar, piano, drums, violin, etc.", status: "Active", createdAt: "2024-01-17T11:00:00Z" },
+  { _id: "sub8", categoryId: "cat4", name: "European Languages", description: "Spanish, French, German, and Italian instruction.", status: "Active", createdAt: "2024-01-18T10:00:00Z" },
+  { _id: "sub9", categoryId: "cat4", name: "Asian Languages", description: "Japanese, Mandarin, Hindi, and Korean instruction.", status: "Active", createdAt: "2024-01-18T11:00:00Z" },
+  { _id: "sub10", categoryId: "cat5", name: "Yoga & Mindfulness", description: "Yoga postures, breathing exercises, and meditation.", status: "Active", createdAt: "2024-01-19T10:00:00Z" },
+];
+
+export const MOCK_THIRDCATEGORIES = [
+  { _id: "third1", subCategoryId: "sub1", name: "Frontend Development", description: "HTML, CSS, Javascript, React, Tailwind, and client-side logic.", status: "Active", createdAt: "2024-01-20T10:00:00Z" },
+  { _id: "third2", subCategoryId: "sub1", name: "Backend Development", description: "Node.js, Express, databases (MySQL, MongoDB), and APIs.", status: "Active", createdAt: "2024-01-20T11:00:00Z" },
+  { _id: "third3", subCategoryId: "sub2", name: "Flutter Development", description: "Cross-platform mobile apps using Dart and Flutter.", status: "Active", createdAt: "2024-01-21T10:00:00Z" },
+  { _id: "third4", subCategoryId: "sub2", name: "React Native Development", description: "Building native mobile apps using React and Javascript.", status: "Active", createdAt: "2024-01-21T11:00:00Z" },
+  { _id: "third5", subCategoryId: "sub3", name: "Machine Learning", description: "Supervised and unsupervised models, neural networks, PyTorch.", status: "Active", createdAt: "2024-01-22T10:00:00Z" },
+  { _id: "third6", subCategoryId: "sub4", name: "Portrait Photography", description: "Studio lighting, depth of field, posing, and editing faces.", status: "Active", createdAt: "2024-01-23T10:00:00Z" },
+  { _id: "third7", subCategoryId: "sub4", name: "Landscape Photography", description: "Outdoor lighting, composition, and nature photography.", status: "Active", createdAt: "2024-01-23T11:00:00Z" },
+  { _id: "third8", subCategoryId: "sub5", name: "Logo Design", description: "Creating minimal, vector-based business logos and icons.", status: "Active", createdAt: "2024-01-24T10:00:00Z" },
+  { _id: "third9", subCategoryId: "sub6", name: "Hindustani Classical", description: "Ragas, sargam exercises, and traditional Indian classical vocals.", status: "Active", createdAt: "2024-01-25T10:00:00Z" },
+  { _id: "third10", subCategoryId: "sub7", name: "Acoustic Guitar", description: "Chords, strumming patterns, and basic fingerpicking.", status: "Active", createdAt: "2024-01-26T10:00:00Z" },
+];
+
+
 export const EXPERIENCE_LEVELS = ["Beginner", "Intermediate", "Advanced"];
 export const AVAILABILITY = ["Weekdays", "Weekends", "Flexible", "Evenings", "Mornings"];
 export const MODES = ["Online", "Offline", "Both"];
@@ -376,3 +416,52 @@ export const ADMIN_STATS = {
   recentSignups: 45,
   pendingReports: 3,
 };
+
+// ─── FEEDBACK ─────────────────────────────────────────────────────────────────
+export const MOCK_FEEDBACK = [
+  {
+    _id: "feed1",
+    userName: "Aryan Sharma",
+    userEmail: "aryan@example.com",
+    rating: 5,
+    category: "UI/UX Experience",
+    comment: "The new category management pages look fantastic! The animations are super smooth and loading times are incredibly fast.",
+    status: "New",
+    adminNotes: "",
+    createdAt: "2026-06-05T10:30:00Z"
+  },
+  {
+    _id: "feed2",
+    userName: "Priya Patel",
+    userEmail: "priya@example.com",
+    rating: 3,
+    category: "Bug Report",
+    comment: "I noticed a small visual glitch where the chat window scroll bar does not scroll automatically to the bottom on mobile screens.",
+    status: "In Review",
+    adminNotes: "Investigating scroll-into-view behavior on iOS Safari.",
+    createdAt: "2026-06-06T14:15:00Z"
+  },
+  {
+    _id: "feed3",
+    userName: "Rahul Verma",
+    userEmail: "rahul@example.com",
+    rating: 4,
+    category: "Feature Suggestion",
+    comment: "It would be amazing to have a dark mode toggle on the homepage. The background is a bit too bright for night usage.",
+    status: "Resolved",
+    adminNotes: "Logged as a future feature proposal. Planning implementation for next release.",
+    createdAt: "2026-06-07T09:00:00Z"
+  },
+  {
+    _id: "feed4",
+    userName: "Anonymous",
+    userEmail: "",
+    rating: 5,
+    category: "General Appreciation",
+    comment: "This is exactly what our community needed. I swapped photography lessons for cooking tips and had a wonderful time!",
+    status: "New",
+    adminNotes: "",
+    createdAt: "2026-06-08T08:45:00Z"
+  }
+];
+

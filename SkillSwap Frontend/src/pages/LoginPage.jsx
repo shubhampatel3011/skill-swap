@@ -14,7 +14,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) {
-      navigate(user.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [user, navigate]);
 

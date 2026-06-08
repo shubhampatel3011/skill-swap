@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { MOCK_SWAPS } from "../../data/mockData";
+import { useState, useEffect } from "react";
 import AdminSidebar from "../../components/AdminSidebar";
 import { toast } from "react-toastify";
+import axios from "axios";
+
 
 const statusColor = { Pending: "warning", Accepted: "success", Rejected: "danger", Completed: "info" };
 
 const AdminSwaps = () => {
-  const [swaps, setSwaps] = useState(MOCK_SWAPS);
+  const [swaps, setSwaps] = useState([]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
 
@@ -26,9 +27,22 @@ const AdminSwaps = () => {
     Rejected: swaps.filter((s) => s.status === "Rejected").length,
   };
 
-  const cancelSwap = (id) => {
-    setSwaps((prev) => prev.map((s) => s._id === id ? { ...s, status: "Rejected" } : s));
-    toast.warning("Swap cancelled by admin.");
+  const cancelSwap = async (id) => {
+    try {
+      await fetch(`http://localhost:3000/swaps/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "rejected",
+        }),
+      });
+
+      fetchSwaps();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -100,7 +114,7 @@ const AdminSwaps = () => {
                       <small className="text-success">{swap.requestedSkill}</small>
                     </td>
                     <td>
-                      <span className={`badge bg-${statusColor[swap.status]} bg-opacity-15 text-${statusColor[swap.status]} border border-${statusColor[swap.status]}`}>
+                      <span className={`badge bg-${statusColor[swap.status]} bg-opacity-15 border border-${statusColor[swap.status]}`}>
                         {swap.status}
                       </span>
                     </td>

@@ -5,6 +5,10 @@ const links = [
   { to: "/admin/users", icon: "bi-people", label: "Users" },
   { to: "/admin/skills", icon: "bi-grid-3x3-gap", label: "Skills" },
   { to: "/admin/swaps", icon: "bi-arrow-left-right", label: "Swaps" },
+  { to: "/admin/categories", icon: "bi-folder", label: "Categories" },
+  { to: "/admin/sub-categories", icon: "bi-folder-symlink", label: "Sub-categories" },
+  { to: "/admin/third-categories", icon: "bi-folder2-open", label: "Third-categories" },
+  { to: "/admin/feedback", icon: "bi-chat-left-heart", label: "Feedback" },
 ];
 
 const AdminSidebar = () => (

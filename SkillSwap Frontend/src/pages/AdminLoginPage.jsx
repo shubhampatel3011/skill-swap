@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 
 const AdminLoginPage = () => {
-  const { adminLogin, user } = useAuth();
+  const { adminLogin, admin } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -12,10 +12,10 @@ const AdminLoginPage = () => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (user && user.role === "admin") {
+    if (admin && admin.role === "admin") {
       navigate("/admin", { replace: true });
     }
-  }, [user, navigate]);
+  }, [admin, navigate]);
 
   const validate = () => {
     const e = {};

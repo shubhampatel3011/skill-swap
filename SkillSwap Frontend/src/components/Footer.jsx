@@ -36,6 +36,7 @@ const Footer = () => (
             <li><a href="#faq" className="ss-footer-link">FAQ</a></li>
             <li><a href="#" className="ss-footer-link">Help Center</a></li>
             <li><a href="#" className="ss-footer-link">Contact Us</a></li>
+            <li><Link to="/feedback" className="ss-footer-link">Website Feedback</Link></li>
           </ul>
         </div>
 

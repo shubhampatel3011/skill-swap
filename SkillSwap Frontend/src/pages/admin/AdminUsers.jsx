@@ -95,7 +95,7 @@ const AdminUsers = () => {
                       <div className="small text-muted">{u.rating} ({u.reviewCount})</div>
                     </td>
                     <td>
-                      <span className={`badge ${u.isBlocked ? "bg-danger" : "bg-success"} bg-opacity-15 ${u.isBlocked ? "text-danger" : "text-success"} border ${u.isBlocked ? "border-danger" : "border-success"}`}>
+                      <span className={`badge ${u.isBlocked ? "bg-danger" : "bg-success"} bg-opacity-15 ${u.isBlocked ? "text" : "text"} border ${u.isBlocked ? "border-danger" : "border-success"}`}>
                         {u.isBlocked ? "Blocked" : "Active"}
                       </span>
                     </td>

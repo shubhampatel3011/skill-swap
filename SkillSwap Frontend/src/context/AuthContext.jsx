@@ -43,22 +43,30 @@ const normalizeUser = (rawUser) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);      // client session
+  const [admin, setAdmin] = useState(null);    // admin session (independent)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("ss_user");
-      if (stored && stored !== "undefined") {
-        const parsed = JSON.parse(stored);
-        setUser(normalizeUser(parsed));
+      const storedUser = localStorage.getItem("ss_user");
+      if (storedUser && storedUser !== "undefined") {
+        setUser(normalizeUser(JSON.parse(storedUser)));
       }
     } catch (err) {
       console.error("Failed to parse user from localStorage:", err);
-      localStorage.removeItem("ss_user"); 
-    } finally {
-      setLoading(false);
+      localStorage.removeItem("ss_user");
     }
+    try {
+      const storedAdmin = localStorage.getItem("ss_admin");
+      if (storedAdmin && storedAdmin !== "undefined") {
+        setAdmin(normalizeUser(JSON.parse(storedAdmin)));
+      }
+    } catch (err) {
+      console.error("Failed to parse admin from localStorage:", err);
+      localStorage.removeItem("ss_admin");
+    }
+    setLoading(false);
   }, []);
 
   const login = (emailOrUser, password) => {
@@ -92,8 +100,8 @@ export const AuthProvider = ({ children }) => {
     if (!found) throw new Error("Invalid email or password.");
 
     const normalizedFound = normalizeUser(found);
-    setUser(normalizedFound);
-    localStorage.setItem("ss_user", JSON.stringify(normalizedFound));
+    setAdmin(normalizedFound);                                    // sets admin only
+    localStorage.setItem("ss_admin", JSON.stringify(normalizedFound)); // separate key
     return normalizedFound;
   };
 
@@ -123,6 +131,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("ss_user");
   };
 
+  const adminLogout = () => {
+    setAdmin(null);
+    localStorage.removeItem("ss_admin");
+  };
+
   const updateProfile = (updates) => {
     if (!user){
       return;
@@ -133,8 +146,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, adminLogin, logout, register, updateProfile }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, admin, loading, login, adminLogin, logout, adminLogout, register, updateProfile }}>
+      {children}
     </AuthContext.Provider>
   );
 };

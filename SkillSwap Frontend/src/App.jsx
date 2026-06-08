@@ -22,11 +22,16 @@ import SwapRequestsPage from "./pages/SwapRequestsPage";
 import ChatPage from "./pages/ChatPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ReviewsPage from "./pages/ReviewsPage";
+import FeedbackPage from "./pages/FeedbackPage";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSkills from "./pages/admin/AdminSkills";
 import AdminSwaps from "./pages/admin/AdminSwaps";
+import AdminCategories from "./pages/admin/AdminCategories";
+import AdminSubCategories from "./pages/admin/AdminSubCategories";
+import AdminThirdCategories from "./pages/admin/AdminThirdCategories";
+import AdminFeedback from "./pages/admin/AdminFeedback";
 
 const AdminLayout = ({ children }) => (
   <AdminRoute>{children}</AdminRoute>
@@ -45,6 +50,10 @@ function App() {
               <Route path="/admin/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />
               <Route path="/admin/skills" element={<AdminLayout><AdminSkills /></AdminLayout>} />
               <Route path="/admin/swaps" element={<AdminLayout><AdminSwaps /></AdminLayout>} />
+              <Route path="/admin/categories" element={<AdminLayout><AdminCategories /></AdminLayout>} />
+              <Route path="/admin/sub-categories" element={<AdminLayout><AdminSubCategories /></AdminLayout>} />
+              <Route path="/admin/third-categories" element={<AdminLayout><AdminThirdCategories /></AdminLayout>} />
+              <Route path="/admin/feedback" element={<AdminLayout><AdminFeedback /></AdminLayout>} />
 
               {/* ── Public & User Routes ── */}
               <Route path="/*" element={
@@ -57,6 +66,7 @@ function App() {
                       <Route path="/register" element={<RegisterPage />} />
                       <Route path="/skills" element={<SkillsPage />} />
                       <Route path="/users/:id" element={<UserProfilePage />} />
+                      <Route path="/feedback" element={<FeedbackPage />} />
 
                       {/* Protected Routes */}
                       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
