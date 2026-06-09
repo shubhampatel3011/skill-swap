@@ -114,6 +114,19 @@ body {
   color: #fff;
   font-size: 16px;
 }
+.ss-navbar-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+.ss-sidebar-logo {
+  width: 80%;
+  max-width: 160px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
 .ss-brand-text {
   font-weight: 800;
   font-size: 1.25rem;
@@ -544,6 +557,14 @@ body {
   background: var(--ss-dark-2);
   min-height: 100vh;
   flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  z-index: 1020;
+}
+.ss-admin-layout > :not(.ss-admin-sidebar) {
+  margin-left: 230px;
 }
 .ss-admin-nav-link {
   color: rgba(255,255,255,0.65);
@@ -642,12 +663,16 @@ body {
 @media (max-width: 991px) {
   .ss-admin-layout { flex-direction: column; }
   .ss-admin-sidebar {
+    position: static;
     width: 100%;
     min-height: auto;
     flex-direction: row;
     overflow-x: auto;
     flex-wrap: nowrap;
     padding: 8px !important;
+  }
+  .ss-admin-layout > :not(.ss-admin-sidebar) {
+    margin-left: 0;
   }
   .ss-admin-sidebar .ss-admin-sidebar-brand { display: none; }
   .ss-admin-nav-link { white-space: nowrap; }

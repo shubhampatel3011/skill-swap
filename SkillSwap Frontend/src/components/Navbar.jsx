@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import NotificationBell from "./NotificationBell";
+import logo from "../assets/logo.png";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -16,9 +17,7 @@ const Navbar = () => {
       <div className="container">
         {/* Brand */}
         <Link className="navbar-brand d-flex align-items-center gap-2" to="/">
-          <span className="ss-brand-icon">
-            <i className="bi bi-arrow-left-right"></i>
-          </span>
+          <img src={logo} alt="SkillSwap Logo" className="ss-navbar-logo" />
           <span className="ss-brand-text">SkillSwap</span>
         </Link>
 

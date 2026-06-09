@@ -282,7 +282,7 @@ const AdminFeedback = () => {
                       <small className="text-muted small">{feed.rating} / 5</small>
                     </td>
                     <td>
-                      <span className={`badge bg-opacity-15 border text-uppercase px-2 py-1 fw-bold ${getCategoryBadgeClass(feed.category)}`} style={{ fontSize: "10px", letterSpacing: "0.03em" }}>
+                      <span className={`badge bg-opacity-15 border text-white text-uppercase px-2 py-1 fw-bold ${getCategoryBadgeClass(feed.category)}`} style={{ fontSize: "10px", letterSpacing: "0.03em" }}>
                         {feed.category}
                       </span>
                     </td>

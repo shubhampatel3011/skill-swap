@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import logo from "../assets/logo.png";
 
 const links = [
   { to: "/admin", icon: "bi-speedometer2", label: "Dashboard", end: true },
@@ -13,10 +14,11 @@ const links = [
 
 const AdminSidebar = () => (
   <div className="ss-admin-sidebar d-flex flex-column p-3 gap-1">
-    <div className="ss-admin-sidebar-brand mb-3 px-2">
-      <span className="fw-bold text-white">
+    <div className="ss-admin-sidebar-brand mb-3 px-2 text-center">
+      <img src={logo} alt="SkillSwap Logo" className="ss-sidebar-logo mb-3" />
+      <div className="fw-bold text-white mt-3">
         <i className="bi bi-shield-check me-2 text-warning"></i>Admin Panel
-      </span>
+      </div>
     </div>
     {links.map((l) => (
       <NavLink
