@@ -121,4 +121,20 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
+router.put("/block/:id", async (req, res) => {
+  try {
+    const db = new userTbl();
+
+    await db.UpdateBlockStatus(req.params.id, req.body.isBlocked);
+
+    res.status(200).json({
+      message: "User status updated successfully",
+    });
+  } catch (e) {
+    res.status(500).json({
+      error: e.message,
+    });
+  }
+});
+
 module.exports = router;

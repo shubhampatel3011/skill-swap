@@ -1,38 +1,39 @@
 import { useState, useEffect } from "react";
-import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES } from "../../data/mockData";
 import AdminSidebar from "../../components/AdminSidebar";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const AdminCategories = () => {
-  const [categories, setCategories] = useState(() => {
-    const saved = localStorage.getItem("admin_categories");
-    return saved ? JSON.parse(saved) : MOCK_CATEGORIES;
-  });
-
-  const [subCategories] = useState(() => {
-    const saved = localStorage.getItem("admin_subcategories");
-    return saved ? JSON.parse(saved) : MOCK_SUBCATEGORIES;
-  });
-
+  const [categories, setCategories] = useState([]);
+  const [subCategories] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState(null); // null for add, object for edit
+  const [currentCategory, setCurrentCategory] = useState(null);
   const [form, setForm] = useState({ name: "", icon: "bi-cpu", description: "", status: "Active" });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    localStorage.setItem("admin_categories", JSON.stringify(categories));
-  }, [categories]);
+    getCategories();
+  }, []);
+
+  const getCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/category");
+      setCategories(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch categories");
+    }
+  };
 
   const filtered = categories.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.description.toLowerCase().includes(search.toLowerCase())
+    c.categoryName?.toLowerCase().includes(search.toLowerCase()) ||
+    c.description?.toLowerCase().includes(search.toLowerCase())
   );
 
   const activeCount = categories.filter((c) => c.status === "Active").length;
   const inactiveCount = categories.length - activeCount;
 
-  // Icon suggestions
   const iconSuggestions = [
     "bi-cpu", "bi-palette", "bi-music-note-beamed", "bi-translate",
     "bi-heart-pulse", "bi-briefcase", "bi-mortarboard", "bi-egg-fried",
@@ -48,9 +49,9 @@ const AdminCategories = () => {
   };
 
   const handleOpenEdit = (category) => {
-    setCurrentCategory(category);
+    setCurrentCategory(category); 
     setForm({
-      name: category.name,
+      name: category.categoryName,
       icon: category.icon || "bi-cpu",
       description: category.description,
       status: category.status || "Active"
@@ -66,64 +67,73 @@ const AdminCategories = () => {
     return e;
   };
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    const v = validate();
-    if (Object.keys(v).length > 0) {
-      setErrors(v);
-      return;
-    }
+  const handleSave = async (e) => {
+  e.preventDefault();
+  const v = validate();
+  if (Object.keys(v).length > 0) { setErrors(v); return; }
 
-    if (currentCategory) {
-      // Edit
-      setCategories((prev) =>
-        prev.map((c) =>
-          c._id === currentCategory._id
-            ? { ...c, name: form.name, icon: form.icon, description: form.description, status: form.status }
-            : c
-        )
-      );
+  if (currentCategory) {
+    try {
+      await axios.put(`http://localhost:3000/category/${currentCategory.categoryId}`, {
+        CategoryName: form.name,
+        Description: form.description,
+        Status: form.status
+      });
       toast.success("Category updated successfully.");
-    } else {
-      // Add
-      const newCategory = {
-        _id: "cat_" + Date.now(),
-        name: form.name,
-        icon: form.icon,
-        description: form.description,
-        status: form.status,
-        createdAt: new Date().toISOString()
-      };
-      setCategories((prev) => [...prev, newCategory]);
+      getCategories();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update category.");
+    }
+  } else {
+    try {
+      await axios.post("http://localhost:3000/category", {
+        CategoryName: form.name,
+        Description: form.description,
+        Status: form.status,
+      });
       toast.success("Category created successfully.");
+      getCategories();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to add category.");
     }
-    setShowModal(false);
-  };
+  }
+  setShowModal(false);
+};
 
-  const toggleStatus = (id) => {
-    setCategories((prev) =>
-      prev.map((c) => {
-        if (c._id === id) {
-          const newStatus = c.status === "Active" ? "Inactive" : "Active";
-          toast.info(`Category status set to ${newStatus}`);
-          return { ...c, status: newStatus };
-        }
-        return c;
-      })
-    );
-  };
+const toggleStatus = async (cat) => {
+  try {
+    const newStatus = cat.status === "Active" ? "Inactive" : "Active";
+    await axios.put(`http://localhost:3000/category/${cat.categoryId}`, {
+      CategoryName: cat.categoryName,
+      Description: cat.description,
+      Status: newStatus,
+    });
+    toast.info(`Category status set to ${newStatus}`);
+    getCategories();
+  } catch (error) {
+    toast.error("Failed to update status.");
+  }
+};
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this category? Subcategories under it will remain but lose their active parent status.")) {
-      setCategories((prev) => prev.filter((c) => c._id !== id));
+const handleDelete = async (id) => {
+  if (window.confirm("Are you sure you want to delete this category?")) {
+    try {
+      await axios.delete(`http://localhost:3000/category/${id}`);
       toast.success("Category deleted.");
+      getCategories();
+    } catch (error) {
+      toast.error("Failed to delete category.");
     }
-  };
+  }
+};
 
-  // Helper to count subcategories
   const getSubcategoryCount = (categoryId) => {
     return subCategories.filter((sub) => sub.categoryId === categoryId).length;
   };
+
+  // ... rest of your return JSX (no changes needed there)
 
   return (
     <div className="d-flex ss-admin-layout">
@@ -202,15 +212,15 @@ const AdminCategories = () => {
               </thead>
               <tbody>
                 {filtered.map((cat) => (
-                  <tr key={cat._id}>
+                  <tr key={cat.categoryId}>
                     <td>
                       <div className="d-flex align-items-center gap-3">
                         <div className="bg-primary bg-opacity-10 text-primary rounded p-2 d-inline-flex justify-content-center align-items-center" style={{ width: 40, height: 40 }}>
                           <i className={`bi ${cat.icon || "bi-folder"} fs-5`}></i>
                         </div>
                         <div>
-                          <div className="fw-bold">{cat.name}</div>
-                          <small className="text-muted text-uppercase" style={{ fontSize: "10px", letterSpacing: "0.05em" }}>ID: {cat._id}</small>
+                          <div className="fw-bold">{cat.categoryName}</div>
+                          <small className="text-muted text-uppercase" style={{ fontSize: "10px", letterSpacing: "0.05em" }}>ID: {cat.categoryId}</small>
                         </div>
                       </div>
                     </td>
@@ -221,13 +231,13 @@ const AdminCategories = () => {
                     </td>
                     <td>
                       <span className="badge bg-info bg-opacity-10 text-info px-2.5 py-1.5 fw-semibold border border-info border-opacity-20">
-                        {getSubcategoryCount(cat._id)} Sub-categories
+                        {getSubcategoryCount(cat.categoryId)} Sub-categories
                       </span>
                     </td>
                     <td>
                       <button
                         className={`btn btn-sm border-0 bg-transparent p-0`}
-                        onClick={() => toggleStatus(cat._id)}
+                        onClick={() => toggleStatus(cat)}
                         title="Click to toggle status"
                       >
                         <span className={`badge ${cat.status === "Active" ? "bg-success text-white" : "bg-danger text-white"}`}>
@@ -249,7 +259,7 @@ const AdminCategories = () => {
                         </button>
                         <button
                           className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleDelete(cat._id)}
+                          onClick={() => handleDelete(cat.categoryId)}
                           title="Delete Category"
                         >
                           <i className="bi bi-trash"></i>

@@ -6,9 +6,10 @@ class userTbl {
     const db = await MyConnection();
     const [result] = await db.execute(
       `INSERT INTO usertbl
-      (Name, Email, Mobile, Password, Address, Skills, Intrest)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      (UserId, Name, Email, Mobile, Password, Address, Skills, Intrest)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
+        Model.UserId,
         Model.Name,
         Model.Email,
         Model.Mobile,
@@ -105,10 +106,21 @@ class userTbl {
   // check email exist or not
   async CheckEmail(email) {
     const db = await MyConnection();
+    const [result] = await db.execute("Select * from usertbl where email=?", [
+      email,
+    ]);
+    db.end();
+    return result;
+  }
+
+  async UpdateBlockStatus(id, status) {
+    const db = await MyConnection();
+
     const [result] = await db.execute(
-      "Select * from usertbl where email=?",
-      [email],
+      "UPDATE userTbl SET isBlocked=? WHERE userId=?",
+      [status, id],
     );
+
     db.end();
     return result;
   }

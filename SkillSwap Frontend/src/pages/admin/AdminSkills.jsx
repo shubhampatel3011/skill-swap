@@ -1,13 +1,17 @@
-import { useState } from "react";
-import { MOCK_SKILLS } from "../../data/mockData";
+import { useState, useEffect } from "react";
 import AdminSidebar from "../../components/AdminSidebar";
 import StarRating from "../../components/StarRating";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const AdminSkills = () => {
-  const [skills, setSkills] = useState(MOCK_SKILLS);
+  const [skills, setSkills] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
+
+  useEffect(() => {
+    getSkills();
+  }, []);
 
   const filtered = skills.filter((s) => {
     const matchSearch = s.title.toLowerCase().includes(search.toLowerCase()) || s.userName.toLowerCase().includes(search.toLowerCase());
@@ -15,12 +19,30 @@ const AdminSkills = () => {
     return matchSearch && matchCat;
   });
 
-  const categories = [...new Set(MOCK_SKILLS.map((s) => s.category))];
+  const categories = [...new Set(skills.map((s) => s.category))];
 
-  const deleteSkill = (id) => {
+  const getSkills = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/skills");
+      // setSkills(response.data.List);
+      const skillData = response.data;
+      setSkills(Array.isArray(skillData) ? skillData : skillData.List || skillData.skills || skillData.data || []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch skills");
+    }
+  };
+
+  const deleteSkill = async (id) => {
     if (window.confirm("Remove this skill listing?")) {
-      setSkills((prev) => prev.filter((s) => s._id !== id));
-      toast.success("Skill removed.");
+      try {
+        await axios.delete(`http://localhost:3000/skills/${id}`);
+        setSkills((prev) => prev.filter((s) => s._id !== id));
+        toast.success("Skill removed.");
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to remove skill");
+      }
     }
   };
 

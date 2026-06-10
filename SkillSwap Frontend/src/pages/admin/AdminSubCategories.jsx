@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES, MOCK_THIRDCATEGORIES } from "../../data/mockData";
 import AdminSidebar from "../../components/AdminSidebar";
 import { toast } from "react-toastify";
 

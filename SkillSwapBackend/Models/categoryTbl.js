@@ -4,15 +4,23 @@ class categoryTbl {
 
   async AddCategory(Model) {
     const db = await MyConnection();
-
     const [result] = await db.execute(
-      `INSERT INTO categoryTbl (categoryName)
-       VALUES (?)`,
-      [Model.categoryName]
+      `INSERT INTO categoryTbl
+      (categoryName, description, status)
+      VALUES (?, ?, ?)`,
+      [
+        Model.CategoryName,
+        Model.Description,
+        Model.Status,
+      ],
     );
-
     db.end();
-    return result;
+    if (result) {
+      console.log(result);
+      return "Your Data is successfully stored.";
+    } else {
+      return "Something is wrong in the DB";
+    }
   }
 
   async GetList() {
@@ -54,8 +62,13 @@ class categoryTbl {
     const db = await MyConnection();
 
     const [result] = await db.execute(
-      "UPDATE categoryTbl SET categoryName=? WHERE categoryId=?",
-      [Model.categoryName, id]
+      "UPDATE categoryTbl SET categoryName=?, description=?, status=? WHERE categoryId=?",
+      [
+        Model.CategoryName,
+        Model.Description,
+        Model.Status,
+        id
+      ]
     );
 
     db.end();

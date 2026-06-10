@@ -12,6 +12,9 @@ const swapRouter = require("./routes/swap");
 const messageRouter = require("./routes/message");
 const reviewRouter = require("./routes/review");
 const notificationRouter = require("./routes/notification");
+const categoryRouter = require('./routes/category');
+const subCategoryRouter = require('./routes/subCategory');
+const thirdCategoryRouter = require('./routes/thirdCategory');
 
 var app = express();
 
@@ -33,6 +36,9 @@ app.use('/swap', swapRouter);
 app.use('/message', messageRouter);
 app.use('/review', reviewRouter);
 app.use('/notification', notificationRouter);
+app.use('/category', categoryRouter);
+app.use('/subCategory', subCategoryRouter);
+app.use('/thirdCategory', thirdCategoryRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
