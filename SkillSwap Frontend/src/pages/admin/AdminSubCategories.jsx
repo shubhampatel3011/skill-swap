@@ -1,48 +1,58 @@
 import { useState, useEffect } from "react";
 import AdminSidebar from "../../components/AdminSidebar";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const AdminSubCategories = () => {
-  const [categories] = useState(() => {
-    const saved = localStorage.getItem("admin_categories");
-    return saved ? JSON.parse(saved) : MOCK_CATEGORIES;
-  });
-
-  const [subCategories, setSubCategories] = useState(() => {
-    const saved = localStorage.getItem("admin_subcategories");
-    return saved ? JSON.parse(saved) : MOCK_SUBCATEGORIES;
-  });
-
-  const [thirdCategories] = useState(() => {
-    const saved = localStorage.getItem("admin_thirdcategories");
-    return saved ? JSON.parse(saved) : MOCK_THIRDCATEGORIES;
-  });
-
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [currentSubCategory, setCurrentSubCategory] = useState(null);
   const [form, setForm] = useState({ name: "", categoryId: "", description: "", status: "Active" });
   const [errors, setErrors] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [thirdCategories] = useState([]); // Placeholder for third categories if needed for counts
 
   useEffect(() => {
-    localStorage.setItem("admin_subcategories", JSON.stringify(subCategories));
-  }, [subCategories]);
+    getSubCategories();
+    getCategories();
+  }, []);
 
-  // Find Category helper
-  const getCategory = (catId) => {
-    return categories.find((c) => c._id === catId) || { name: "Unknown Category", icon: "bi-folder" };
+  const getSubCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/subCategory");
+      setSubCategories(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch sub-categories");
+    }
+  };
+
+  const getCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/category");
+      setCategories(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch categories");
+    }
+  };
+
+  // Helper to find a category by ID from local state
+  const getCategoryById = (categoryId) => {
+    return categories.find((c) => c.categoryId === categoryId) || { name: "Unknown", icon: "bi-folder" };
   };
 
   // Filter logic
   const filtered = subCategories.filter((sub) => {
-    const parentCat = getCategory(sub.categoryId);
+    const parentCat = getCategoryById(sub.categoryId);
     const matchesSearch =
-      sub.name.toLowerCase().includes(search.toLowerCase()) ||
-      sub.description.toLowerCase().includes(search.toLowerCase()) ||
-      parentCat.name.toLowerCase().includes(search.toLowerCase());
+      sub.subCategoryName?.toLowerCase().includes(search.toLowerCase()) ||
+      sub.description?.toLowerCase().includes(search.toLowerCase()) ||
+      parentCat.categoryName?.toLowerCase().includes(search.toLowerCase());
 
-    const matchesCatFilter = !categoryFilter || sub.categoryId === categoryFilter;
+    const matchesCatFilter = !categoryFilter || String(sub.categoryId) === String(categoryFilter);
 
     return matchesSearch && matchesCatFilter;
   });
@@ -51,7 +61,7 @@ const AdminSubCategories = () => {
   const inactiveCount = subCategories.length - activeCount;
 
   const handleOpenAdd = () => {
-    const defaultCatId = categories.length > 0 ? categories[0]._id : "";
+    const defaultCatId = categories.length > 0 ? categories[0].categoryId : "";
     setCurrentSubCategory(null);
     setForm({ name: "", categoryId: defaultCatId, description: "", status: "Active" });
     setErrors({});
@@ -61,7 +71,7 @@ const AdminSubCategories = () => {
   const handleOpenEdit = (subCat) => {
     setCurrentSubCategory(subCat);
     setForm({
-      name: subCat.name,
+      name: subCat.subCategoryName,
       categoryId: subCat.categoryId,
       description: subCat.description,
       status: subCat.status || "Active"
@@ -78,7 +88,7 @@ const AdminSubCategories = () => {
     return e;
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const v = validate();
     if (Object.keys(v).length > 0) {
@@ -87,48 +97,66 @@ const AdminSubCategories = () => {
     }
 
     if (currentSubCategory) {
-      // Edit
-      setSubCategories((prev) =>
-        prev.map((sub) =>
-          sub._id === currentSubCategory._id
-            ? { ...sub, name: form.name, categoryId: form.categoryId, description: form.description, status: form.status }
-            : sub
-        )
-      );
-      toast.success("Sub-category updated successfully.");
+      // Edit — PUT /subCategory/:id
+      try {
+        await axios.put(`http://localhost:3000/subCategory/${currentSubCategory.subCategoryId}`, {
+          CategoryId: form.categoryId,
+          SubCategoryName: form.name,
+          Description: form.description,
+          Status: form.status,
+        });
+        toast.success("Sub-category updated successfully.");
+        getSubCategories();
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to update sub-category.");
+      }
     } else {
-      // Add
-      const newSub = {
-        _id: "sub_" + Date.now(),
-        name: form.name,
-        categoryId: form.categoryId,
-        description: form.description,
-        status: form.status,
-        createdAt: new Date().toISOString()
-      };
-      setSubCategories((prev) => [...prev, newSub]);
-      toast.success("Sub-category created successfully.");
+      // Add — POST /subCategory
+      try {
+        await axios.post("http://localhost:3000/subCategory", {
+          CategoryId: form.categoryId,
+          SubCategoryName: form.name,
+          Description: form.description,
+          Status: form.status,
+        });
+        toast.success("Sub-category created successfully.");
+        getSubCategories();
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to create sub-category.");
+      }
     }
     setShowModal(false);
   };
 
-  const toggleStatus = (id) => {
-    setSubCategories((prev) =>
-      prev.map((sub) => {
-        if (sub._id === id) {
-          const newStatus = sub.status === "Active" ? "Inactive" : "Active";
-          toast.info(`Sub-category status set to ${newStatus}`);
-          return { ...sub, status: newStatus };
-        }
-        return sub;
-      })
-    );
+  const toggleStatus = async (sub) => {
+    try {
+      const newStatus = sub.status === "Active" ? "Inactive" : "Active";
+      await axios.put(`http://localhost:3000/subCategory/${sub.subCategoryId}`, {
+        CategoryId: sub.categoryId,
+        SubCategoryName: sub.subCategoryName,
+        Description: sub.description,
+        Status: newStatus,
+      });
+      toast.info(`Sub-category status set to ${newStatus}`);
+      getSubCategories();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update status.");
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this sub-category? Third categories under it will remain but lose their active parent structure.")) {
-      setSubCategories((prev) => prev.filter((sub) => sub._id !== id));
-      toast.success("Sub-category deleted.");
+      try {
+        await axios.delete(`http://localhost:3000/subCategory/${id}`);
+        toast.success("Sub-category deleted.");
+        getSubCategories();
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to delete sub-category.");
+      }
     }
   };
 
@@ -204,7 +232,7 @@ const AdminSubCategories = () => {
           >
             <option value="">All Categories</option>
             {categories.map((c) => (
-              <option key={c._id} value={c._id}>{c.name}</option>
+              <option key={c.categoryId} value={c.categoryId}>{c.categoryName}</option>
             ))}
           </select>
         </div>
@@ -226,19 +254,19 @@ const AdminSubCategories = () => {
               </thead>
               <tbody>
                 {filtered.map((sub) => {
-                  const parentCat = getCategory(sub.categoryId);
+                  const parentCat = getCategoryById(sub.categoryId);
                   return (
-                    <tr key={sub._id}>
+                    <tr key={sub.subCategoryId}>
                       <td>
                         <div>
-                          <div className="fw-bold">{sub.name}</div>
-                          <small className="text-muted text-uppercase" style={{ fontSize: "10px", letterSpacing: "0.05em" }}>ID: {sub._id}</small>
+                          <div className="fw-bold">{sub.subCategoryName}</div>
+                          <small className="text-muted text-uppercase" style={{ fontSize: "10px", letterSpacing: "0.05em" }}>ID: {sub.subCategoryId}</small>
                         </div>
                       </td>
                       <td>
                         <div className="d-flex align-items-center gap-2">
-                          <i className={`bi ${parentCat.icon} text-muted`}></i>
-                          <span className="small fw-semibold">{parentCat.name}</span>
+                          <i className={`bi ${parentCat.icon || "bi-folder"} text-muted`}></i>
+                          <span className="small fw-semibold">{parentCat.categoryName || "Unknown"}</span>
                         </div>
                       </td>
                       <td style={{ maxWidth: 250 }}>
@@ -248,13 +276,13 @@ const AdminSubCategories = () => {
                       </td>
                       <td>
                         <span className="badge bg-secondary bg-opacity-10 text-secondary px-2.5 py-1.5 fw-semibold border border-secondary border-opacity-20">
-                          {getThirdcategoryCount(sub._id)} Third Categories
+                          {getThirdcategoryCount(sub.subCategoryId)} Third Categories
                         </span>
                       </td>
                       <td>
                         <button
                           className="btn btn-sm border-0 bg-transparent p-0"
-                          onClick={() => toggleStatus(sub._id)}
+                          onClick={() => toggleStatus(sub)}
                           title="Click to toggle status"
                         >
                           <span className={`badge ${sub.status === "Active" ? "bg-success text-white" : "bg-danger text-white"}`}>
@@ -263,7 +291,7 @@ const AdminSubCategories = () => {
                         </button>
                       </td>
                       <td className="small text-muted">
-                        {new Date(sub.createdAt).toLocaleDateString()}
+                        {sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : "—"}
                       </td>
                       <td>
                         <div className="d-flex gap-1">
@@ -276,7 +304,7 @@ const AdminSubCategories = () => {
                           </button>
                           <button
                             className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDelete(sub._id)}
+                            onClick={() => handleDelete(sub.subCategoryId)}
                             title="Delete Sub-category"
                           >
                             <i className="bi bi-trash"></i>
@@ -334,7 +362,7 @@ const AdminSubCategories = () => {
                     >
                       <option value="">Choose a parent category...</option>
                       {categories.map((c) => (
-                        <option key={c._id} value={c._id}>{c.name}</option>
+                        <option key={c.categoryId} value={c.categoryId}>{c.categoryName}</option>
                       ))}
                     </select>
                     {errors.categoryId && <div className="invalid-feedback">{errors.categoryId}</div>}

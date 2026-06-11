@@ -1,30 +1,27 @@
 var MyConnection = require("../DBConnector/DBConnection");
 
 class subCategoryTbl {
-
   async AddSubCategory(Model) {
     const db = await MyConnection();
-
     const [result] = await db.execute(
       `INSERT INTO subCategoryTbl
-      (categoryId, subCategoryName)
-      VALUES (?, ?)`,
-      [
-        Model.categoryId,
-        Model.subCategoryName
-      ]
+      (categoryId, subCategoryName, description, status)
+      VALUES (?, ?, ?, ?)`,
+      [Model.CategoryId, Model.SubCategoryName, Model.Description, Model.Status],
     );
-
     db.end();
-    return result;
+    if (result) {
+      console.log(result);
+      return "Your Data is successfully stored.";
+    } else {
+      return "Something is wrong in the DB";
+    }
   }
 
   async GetList() {
     const db = await MyConnection();
 
-    const [result] = await db.execute(
-      "SELECT * FROM subCategoryTbl"
-    );
+    const [result] = await db.execute("SELECT * FROM subCategoryTbl");
 
     db.end();
     return result;
@@ -35,7 +32,7 @@ class subCategoryTbl {
 
     const [result] = await db.execute(
       "SELECT * FROM subCategoryTbl WHERE subCategoryId=?",
-      [id]
+      [id],
     );
 
     db.end();
@@ -47,7 +44,7 @@ class subCategoryTbl {
 
     const [result] = await db.execute(
       "DELETE FROM subCategoryTbl WHERE subCategoryId=?",
-      [id]
+      [id],
     );
 
     db.end();
@@ -59,13 +56,9 @@ class subCategoryTbl {
 
     const [result] = await db.execute(
       `UPDATE subCategoryTbl
-       SET categoryId=?, subCategoryName=?
+       SET categoryId=?, subCategoryName=?, description=?, status=?
        WHERE subCategoryId=?`,
-      [
-        Model.categoryId,
-        Model.subCategoryName,
-        id
-      ]
+      [Model.CategoryId, Model.SubCategoryName, Model.Description, Model.Status, id],
     );
 
     db.end();
