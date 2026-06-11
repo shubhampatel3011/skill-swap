@@ -225,7 +225,7 @@ const handleDelete = async (id) => {
                       </div>
                     </td>
                     <td style={{ maxWidth: 300 }}>
-                      <p className="text-muted small mb-0 text-truncate" title={cat.description}>
+                      <p className="text-muted small mb-0" title={cat.description} style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                         {cat.description}
                       </p>
                     </td>

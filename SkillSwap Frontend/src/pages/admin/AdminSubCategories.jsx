@@ -270,7 +270,7 @@ const AdminSubCategories = () => {
                         </div>
                       </td>
                       <td style={{ maxWidth: 250 }}>
-                        <p className="text-muted small mb-0 text-truncate" title={sub.description}>
+                        <p className="text-muted small mb-0" title={sub.description} style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                           {sub.description}
                         </p>
                       </td>

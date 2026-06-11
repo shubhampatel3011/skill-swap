@@ -1,23 +1,12 @@
 import { useState, useEffect } from "react";
-import { MOCK_CATEGORIES, MOCK_SUBCATEGORIES, MOCK_THIRDCATEGORIES } from "../../data/mockData";
 import AdminSidebar from "../../components/AdminSidebar";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const AdminThirdCategories = () => {
-  const [categories] = useState(() => {
-    const saved = localStorage.getItem("admin_categories");
-    return saved ? JSON.parse(saved) : MOCK_CATEGORIES;
-  });
-
-  const [subCategories] = useState(() => {
-    const saved = localStorage.getItem("admin_subcategories");
-    return saved ? JSON.parse(saved) : MOCK_SUBCATEGORIES;
-  });
-
-  const [thirdCategories, setThirdCategories] = useState(() => {
-    const saved = localStorage.getItem("admin_thirdcategories");
-    return saved ? JSON.parse(saved) : MOCK_THIRDCATEGORIES;
-  });
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [thirdCategories, setThirdCategories] = useState([]);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -34,8 +23,40 @@ const AdminThirdCategories = () => {
   const [modalSubCategories, setModalSubCategories] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem("admin_thirdcategories", JSON.stringify(thirdCategories));
-  }, [thirdCategories]);
+    getThirdCategories();
+    getSubCategories();
+    getCategories();
+  }, []);
+
+  const getThirdCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/thirdCategory");
+      setThirdCategories(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch third-categories");
+    }
+  };
+
+  const getSubCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/subCategory");
+      setSubCategories(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch sub-categories");
+    }
+  };
+
+  const getCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/category");
+      setCategories(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch categories");
+    }
+  };
 
   // Sync subcategories in modal whenever category selection changes
   useEffect(() => {
@@ -43,8 +64,8 @@ const AdminThirdCategories = () => {
       const filteredSubs = subCategories.filter((sub) => sub.categoryId === form.categoryId);
       setModalSubCategories(filteredSubs);
       // Auto-select first subcategory if current selection is not in list
-      if (!filteredSubs.find((sub) => sub._id === form.subCategoryId)) {
-        setForm((f) => ({ ...f, subCategoryId: filteredSubs.length > 0 ? filteredSubs[0]._id : "" }));
+      if (!filteredSubs.find((sub) => sub.subCategoryId === form.subCategoryId)) {
+        setForm((f) => ({ ...f, subCategoryId: filteredSubs.length > 0 ? filteredSubs[0].subCategoryId : "" }));
       }
     } else {
       setModalSubCategories([]);
@@ -54,11 +75,11 @@ const AdminThirdCategories = () => {
 
   // Helpers
   const getSubCategory = (subId) => {
-    return subCategories.find((s) => s._id === subId) || { name: "Unknown Sub-category", categoryId: "" };
+    return subCategories.find((s) => s.subCategoryId === subId) || { subCategoryName: "Unknown Sub-category", categoryId: "" };
   };
 
   const getCategory = (catId) => {
-    return categories.find((c) => c._id === catId) || { name: "Unknown Category", icon: "bi-folder" };
+    return categories.find((c) => c.categoryId === catId) || { categoryName: "Unknown Category", icon: "bi-folder" };
   };
 
   // Cascading Filter lists
@@ -80,8 +101,8 @@ const AdminThirdCategories = () => {
     const matchesSearch =
       third.name.toLowerCase().includes(search.toLowerCase()) ||
       third.description.toLowerCase().includes(search.toLowerCase()) ||
-      parentSub.name.toLowerCase().includes(search.toLowerCase()) ||
-      parentCat.name.toLowerCase().includes(search.toLowerCase());
+      parentSub.subCategoryName.toLowerCase().includes(search.toLowerCase()) ||
+      parentCat.categoryName.toLowerCase().includes(search.toLowerCase());
 
     const matchesCatFilter = !categoryFilter || parentSub.categoryId === categoryFilter;
     const matchesSubFilter = !subCategoryFilter || third.subCategoryId === subCategoryFilter;
@@ -93,9 +114,9 @@ const AdminThirdCategories = () => {
   const inactiveCount = thirdCategories.length - activeCount;
 
   const handleOpenAdd = () => {
-    const defaultCatId = categories.length > 0 ? categories[0]._id : "";
+    const defaultCatId = categories.length > 0 ? categories[0].categoryId : "";
     const firstSubList = subCategories.filter((sub) => sub.categoryId === defaultCatId);
-    const defaultSubId = firstSubList.length > 0 ? firstSubList[0]._id : "";
+    const defaultSubId = firstSubList.length > 0 ? firstSubList[0].subCategoryId : "";
 
     setCurrentThirdCategory(null);
     setForm({
@@ -309,7 +330,7 @@ const AdminThirdCategories = () => {
                         </div>
                       </td>
                       <td style={{ maxWidth: 220 }}>
-                        <p className="text-muted small mb-0 text-truncate" title={third.description}>
+                        <p className="text-muted small mb-0" title={third.description} style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                           {third.description}
                         </p>
                       </td>
