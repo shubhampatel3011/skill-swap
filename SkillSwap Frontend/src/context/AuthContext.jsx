@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { MOCK_USERS } from "../data/mockData";
+import axios from "axios";
 
 const AuthContext = createContext(null);
 
@@ -18,11 +19,15 @@ const normalizeUser = (rawUser) => {
   normalized.email = rawUser.email || rawUser.Email || "";
   normalized.Email = normalized.email;
 
-  normalized.phone = rawUser.phone || rawUser.Mobile || "";
+  // Handle both MySQL lowercase 'mobile' and PascalCase 'Mobile'
+  normalized.phone = rawUser.phone || rawUser.Mobile || rawUser.mobile || "";
   normalized.Mobile = normalized.phone;
+  normalized.mobile = normalized.phone;
 
-  normalized.location = rawUser.location || rawUser.Address || "";
+  // Handle both MySQL lowercase 'address' and PascalCase 'Address'
+  normalized.location = rawUser.location || rawUser.Address || rawUser.address || "";
   normalized.Address = normalized.location;
+  normalized.address = normalized.location;
 
   normalized.role = rawUser.role || rawUser.Role || "user";
   normalized.Role = normalized.role;
@@ -33,6 +38,7 @@ const normalizeUser = (rawUser) => {
   normalized.reviewCount = typeof rawUser.reviewCount !== 'undefined' ? rawUser.reviewCount : (typeof rawUser.ReviewCount !== 'undefined' ? rawUser.ReviewCount : 0);
   normalized.ReviewCount = normalized.reviewCount;
 
+  // Handle both MySQL lowercase 'bio' and PascalCase 'Bio'
   normalized.bio = rawUser.bio || rawUser.Bio || "";
   normalized.Bio = normalized.bio;
 
@@ -41,6 +47,7 @@ const normalizeUser = (rawUser) => {
 
   return normalized;
 };
+
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);      // client session
@@ -136,13 +143,24 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("ss_admin");
   };
 
-  const updateProfile = (updates) => {
-    if (!user){
-      return;
+  const updateProfile = async (updates) => {
+    if (!user) return false;
+    try {
+      await axios.put(`http://localhost:3000/users/${user.userId}`, {
+        Name: updates.name || user.name,
+        Email: updates.email || user.email,
+        Mobile: updates.phone || user.phone || "",
+        Address: updates.location || user.location || "",
+        Bio: updates.bio || user.bio || "",
+      });
+      const updated = normalizeUser({ ...user, ...updates });
+      setUser(updated);
+      localStorage.setItem("ss_user", JSON.stringify(updated));
+      return true;
+    } catch (err) {
+      console.error("Profile update failed:", err);
+      return false;
     }
-    const updated = normalizeUser({ ...user, ...updates });
-    setUser(updated);
-    localStorage.setItem("ss_user", JSON.stringify(updated));
   };
 
   return (

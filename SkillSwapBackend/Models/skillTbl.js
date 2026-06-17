@@ -63,11 +63,21 @@ console.log([
     );
     db.end();
     if (result) {
-      console.log(result);
       return result;
     } else {
       return "Something is wrong in the DB";
     }
+  }
+
+  // get skills by userId
+  async GetByUserId(userId) {
+    const db = await MyConnection();
+    const [result] = await db.execute(
+      "SELECT * FROM skilltbl WHERE userId=?",
+      [userId],
+    );
+    db.end();
+    return result;
   }
 
   // delete data by id

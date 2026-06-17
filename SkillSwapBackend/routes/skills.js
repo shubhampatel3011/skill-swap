@@ -19,6 +19,21 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// GET skills by userId — must be before /:id to avoid collision
+router.get("/user/:userId", async (req, res, next) => {
+  try {
+    const db = new skillTbl();
+    const result = await db.GetByUserId(req.params.userId);
+    res.status(200).json({
+      Message: "User skills fetched successfully.",
+      List: result,
+    });
+  } catch (e) {
+    console.log("MYSQL ERROR:", e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     var id = req.params.id;

@@ -87,16 +87,17 @@ class userTbl {
     }
   }
 
-  // update data
+  // update profile data
   async UpdateUser(id, Model) {
     const db = await MyConnection();
     const [result] = await db.execute(
-      "Update usertbl set name=?, email=? Where userId=?",
-      [Model.Name, Model.Email, id],
+      `UPDATE usertbl
+       SET Name=?, Email=?, Mobile=?, Address=?, Bio=?
+       WHERE userId=?`,
+      [Model.Name, Model.Email, Model.Mobile, Model.Address, Model.Bio, id],
     );
     db.end();
     if (result) {
-      console.log(result);
       return result;
     } else {
       return "Something is wrong in the DB";
