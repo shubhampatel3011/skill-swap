@@ -1,66 +1,94 @@
-var MyConnection = require("../DBConnector/DBConnection");
+var express = require("express");
+var router = express.Router();
+const thirdCategoryTbl = require("../Models/thirdCategoryTbl");
 
-class thirdCategoryTbl {
-  async AddSubCategory(Model) {
-    const db = await MyConnection();
+// Get all third categories
+router.get("/", async (req, res) => {
+  try {
+    const db = new thirdCategoryTbl();
+    const result = await db.GetList();
 
-    const [result] = await db.execute(
-      `INSERT INTO thirdCategoryTbl
-      (categoryId, subCategoryName)
-      VALUES (?, ?)`,
-      [Model.categoryId, Model.subCategoryName],
-    );
-
-    db.end();
-    return result;
+    res.status(200).json({
+      Message: "Third Categories fetched successfully.",
+      List: result,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      error: e.message,
+    });
   }
+});
 
-  async GetList() {
-    const db = await MyConnection();
+// Get third category by id
+router.get("/:id", async (req, res) => {
+  try {
+    const db = new thirdCategoryTbl();
+    const result = await db.GetById(req.params.id);
 
-    const [result] = await db.execute("SELECT * FROM thirdCategoryTbl");
-
-    db.end();
-    return result;
+    res.status(200).json({
+      Message: "Third Category fetched successfully.",
+      Data: result,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      error: e.message,
+    });
   }
+});
 
-  async GetById(id) {
-    const db = await MyConnection();
+// Add third category
+router.post("/", async (req, res) => {
+  try {
+    const db = new thirdCategoryTbl();
+    await db.AddThirdCategory(req.body);
 
-    const [result] = await db.execute(
-      "SELECT * FROM thirdCategoryTbl WHERE subCategoryId=?",
-      [id],
-    );
-
-    db.end();
-    return result;
+    res.status(200).json({
+      Message: "Third Category added successfully.",
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      error: e.message,
+    });
   }
+});
 
-  async DeleteSubCategory(id) {
-    const db = await MyConnection();
+// Update third category
+router.put("/:id", async (req, res) => {
+  try {
+    const db = new thirdCategoryTbl();
+    const result = await db.UpdateThirdCategory(req.params.id, req.body);
 
-    const [result] = await db.execute(
-      "DELETE FROM thirdCategoryTbl WHERE subCategoryId=?",
-      [id],
-    );
-
-    db.end();
-    return result;
+    res.status(200).json({
+      Message: "Third Category updated successfully.",
+      Data: result,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      error: e.message,
+    });
   }
+});
 
-  async UpdateSubCategory(id, Model) {
-    const db = await MyConnection();
+// Delete third category
+router.delete("/:id", async (req, res) => {
+  try {
+    const db = new thirdCategoryTbl();
+    const result = await db.DeleteThirdCategory(req.params.id);
 
-    const [result] = await db.execute(
-      `UPDATE thirdCategoryTbl
-       SET categoryId=?, subCategoryName=?
-       WHERE subCategoryId=?`,
-      [Model.categoryId, Model.subCategoryName, id],
-    );
-
-    db.end();
-    return result;
+    res.status(200).json({
+      Message: "Third Category deleted successfully.",
+      Data: result,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      error: e.message,
+    });
   }
-}
+});
 
-module.exports = thirdCategoryTbl;
+module.exports = router;

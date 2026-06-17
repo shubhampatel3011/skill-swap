@@ -16,7 +16,7 @@ const AdminThirdCategories = () => {
   // Modals
   const [showModal, setShowModal] = useState(false);
   const [currentThirdCategory, setCurrentThirdCategory] = useState(null);
-  const [form, setForm] = useState({ name: "", categoryId: "", subCategoryId: "", description: "", status: "Active" });
+  const [form, setForm] = useState({ thirdCategoryName: "", description: "", categoryId: "", subCategoryId: "" });
   const [errors, setErrors] = useState({});
 
   // Dynamic lists in modal
@@ -61,30 +61,32 @@ const AdminThirdCategories = () => {
   // Sync subcategories in modal whenever category selection changes
   useEffect(() => {
     if (form.categoryId) {
-      const filteredSubs = subCategories.filter((sub) => sub.categoryId === form.categoryId);
+      const filteredSubs = subCategories.filter(
+        (sub) => String(sub.categoryId) === String(form.categoryId)
+      );
       setModalSubCategories(filteredSubs);
       // Auto-select first subcategory if current selection is not in list
-      if (!filteredSubs.find((sub) => sub.subCategoryId === form.subCategoryId)) {
+      if (!filteredSubs.find((sub) => String(sub.subCategoryId) === String(form.subCategoryId))) {
         setForm((f) => ({ ...f, subCategoryId: filteredSubs.length > 0 ? filteredSubs[0].subCategoryId : "" }));
       }
     } else {
       setModalSubCategories([]);
       setForm((f) => ({ ...f, subCategoryId: "" }));
     }
-  }, [form.categoryId, subCategories, form.subCategoryId]);
+  }, [form.categoryId, subCategories]);
 
   // Helpers
   const getSubCategory = (subId) => {
-    return subCategories.find((s) => s.subCategoryId === subId) || { subCategoryName: "Unknown Sub-category", categoryId: "" };
+    return subCategories.find((s) => String(s.subCategoryId) === String(subId)) || { subCategoryName: "Unknown Sub-category", categoryId: "" };
   };
 
   const getCategory = (catId) => {
-    return categories.find((c) => c.categoryId === catId) || { categoryName: "Unknown Category", icon: "bi-folder" };
+    return categories.find((c) => String(c.categoryId) === String(catId)) || { categoryName: "Unknown Category", icon: "bi-folder" };
   };
 
   // Cascading Filter lists
   const availableFilterSubs = categoryFilter
-    ? subCategories.filter((sub) => sub.categoryId === categoryFilter)
+    ? subCategories.filter((sub) => String(sub.categoryId) === String(categoryFilter))
     : [];
 
   // Reset sub-category filter if category filter changes
@@ -98,14 +100,17 @@ const AdminThirdCategories = () => {
     const parentSub = getSubCategory(third.subCategoryId);
     const parentCat = getCategory(parentSub.categoryId);
 
-    const matchesSearch =
-      third.name.toLowerCase().includes(search.toLowerCase()) ||
-      third.description.toLowerCase().includes(search.toLowerCase()) ||
-      parentSub.subCategoryName.toLowerCase().includes(search.toLowerCase()) ||
-      parentCat.categoryName.toLowerCase().includes(search.toLowerCase());
+    const name = third.thirdCategoryName ?? "";
+    const subName = parentSub.subCategoryName ?? "";
+    const catName = parentCat.categoryName ?? "";
 
-    const matchesCatFilter = !categoryFilter || parentSub.categoryId === categoryFilter;
-    const matchesSubFilter = !subCategoryFilter || third.subCategoryId === subCategoryFilter;
+    const matchesSearch =
+      name.toLowerCase().includes(search.toLowerCase()) ||
+      subName.toLowerCase().includes(search.toLowerCase()) ||
+      catName.toLowerCase().includes(search.toLowerCase());
+
+    const matchesCatFilter = !categoryFilter || String(parentSub.categoryId) === String(categoryFilter);
+    const matchesSubFilter = !subCategoryFilter || String(third.subCategoryId) === String(subCategoryFilter);
 
     return matchesSearch && matchesCatFilter && matchesSubFilter;
   });
@@ -115,16 +120,15 @@ const AdminThirdCategories = () => {
 
   const handleOpenAdd = () => {
     const defaultCatId = categories.length > 0 ? categories[0].categoryId : "";
-    const firstSubList = subCategories.filter((sub) => sub.categoryId === defaultCatId);
+    const firstSubList = subCategories.filter((sub) => String(sub.categoryId) === String(defaultCatId));
     const defaultSubId = firstSubList.length > 0 ? firstSubList[0].subCategoryId : "";
 
     setCurrentThirdCategory(null);
     setForm({
-      name: "",
+      thirdCategoryName: "",
+      description: "",
       categoryId: defaultCatId,
       subCategoryId: defaultSubId,
-      description: "",
-      status: "Active"
     });
     setErrors({});
     setShowModal(true);
@@ -134,11 +138,10 @@ const AdminThirdCategories = () => {
     const parentSub = getSubCategory(third.subCategoryId);
     setCurrentThirdCategory(third);
     setForm({
-      name: third.name,
+      thirdCategoryName: third.thirdCategoryName,
+      description: third.description || "",
       categoryId: parentSub.categoryId,
       subCategoryId: third.subCategoryId,
-      description: third.description,
-      status: third.status || "Active"
     });
     setErrors({});
     setShowModal(true);
@@ -146,14 +149,14 @@ const AdminThirdCategories = () => {
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim()) e.name = "Third-category name is required";
+    if (!form.thirdCategoryName.trim()) e.thirdCategoryName = "Third-category name is required";
+    if (!form.description.trim()) e.description = "Description is required";
     if (!form.categoryId) e.categoryId = "Select parent category";
     if (!form.subCategoryId) e.subCategoryId = "Select parent sub-category";
-    if (!form.description.trim()) e.description = "Description is required";
     return e;
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const v = validate();
     if (Object.keys(v).length > 0) {
@@ -161,49 +164,67 @@ const AdminThirdCategories = () => {
       return;
     }
 
+    const payload = {
+      categoryId: form.categoryId,
+      subCategoryId: form.subCategoryId,
+      thirdCategoryName: form.thirdCategoryName,
+      description: form.description,
+    };
+
     if (currentThirdCategory) {
-      // Edit
-      setThirdCategories((prev) =>
-        prev.map((third) =>
-          third._id === currentThirdCategory._id
-            ? { ...third, name: form.name, subCategoryId: form.subCategoryId, description: form.description, status: form.status }
-            : third
-        )
-      );
-      toast.success("Third-category updated successfully.");
+      // Edit — PUT /thirdCategory/:id
+      try {
+        await axios.put(
+          `http://localhost:3000/thirdCategory/${currentThirdCategory.thirdCategoryId}`,
+          payload
+        );
+        toast.success("Third-category updated successfully.");
+        getThirdCategories();
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to update third-category.");
+      }
     } else {
-      // Add
-      const newThird = {
-        _id: "third_" + Date.now(),
-        name: form.name,
-        subCategoryId: form.subCategoryId,
-        description: form.description,
-        status: form.status,
-        createdAt: new Date().toISOString()
-      };
-      setThirdCategories((prev) => [...prev, newThird]);
-      toast.success("Third-category created successfully.");
+      // Add — POST /thirdCategory
+      try {
+        await axios.post("http://localhost:3000/thirdCategory", payload);
+        toast.success("Third-category created successfully.");
+        getThirdCategories();
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to create third-category.");
+      }
     }
     setShowModal(false);
   };
 
-  const toggleStatus = (id) => {
-    setThirdCategories((prev) =>
-      prev.map((third) => {
-        if (third._id === id) {
-          const newStatus = third.status === "Active" ? "Inactive" : "Active";
-          toast.info(`Third-category status set to ${newStatus}`);
-          return { ...third, status: newStatus };
-        }
-        return third;
-      })
-    );
+  const toggleStatus = async (third) => {
+    const newStatus = third.status === "Active" ? "Inactive" : "Active";
+    try {
+      await axios.put(`http://localhost:3000/thirdCategory/${third.thirdCategoryId}`, {
+        categoryId: third.categoryId,
+        subCategoryId: third.subCategoryId,
+        thirdCategoryName: third.thirdCategoryName,
+        status: newStatus,
+      });
+      toast.info(`Third-category status set to ${newStatus}`);
+      getThirdCategories();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update status.");
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this third-level category?")) {
-      setThirdCategories((prev) => prev.filter((third) => third._id !== id));
-      toast.success("Third-category deleted.");
+      try {
+        await axios.delete(`http://localhost:3000/thirdCategory/${id}`);
+        toast.success("Third-category deleted.");
+        getThirdCategories();
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to delete third-category.");
+      }
     }
   };
 
@@ -275,7 +296,7 @@ const AdminThirdCategories = () => {
           >
             <option value="">All Categories</option>
             {categories.map((c) => (
-              <option key={c._id} value={c._id}>{c.name}</option>
+              <option key={c.categoryId} value={c.categoryId}>{c.categoryName}</option>
             ))}
           </select>
 
@@ -288,7 +309,7 @@ const AdminThirdCategories = () => {
           >
             <option value="">All Sub-categories</option>
             {availableFilterSubs.map((sub) => (
-              <option key={sub._id} value={sub._id}>{sub.name}</option>
+              <option key={sub.subCategoryId} value={sub.subCategoryId}>{sub.subCategoryName}</option>
             ))}
           </select>
         </div>
@@ -300,9 +321,9 @@ const AdminThirdCategories = () => {
               <thead className="ss-admin-table-head">
                 <tr>
                   <th>Third Category</th>
+                  <th>Description</th>
                   <th>Sub-category</th>
                   <th>Main Category</th>
-                  <th>Description</th>
                   <th>Status</th>
                   <th>Created</th>
                   <th>Actions</th>
@@ -313,31 +334,31 @@ const AdminThirdCategories = () => {
                   const parentSub = getSubCategory(third.subCategoryId);
                   const parentCat = getCategory(parentSub.categoryId);
                   return (
-                    <tr key={third._id}>
+                    <tr key={third.thirdCategoryId}>
                       <td>
                         <div>
-                          <div className="fw-bold">{third.name}</div>
-                          <small className="text-muted text-uppercase" style={{ fontSize: "10px", letterSpacing: "0.05em" }}>ID: {third._id}</small>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="small fw-semibold text-dark">{parentSub.name}</span>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center gap-1.5 small text-muted">
-                          <i className={`bi ${parentCat.icon}`}></i>
-                          <span>{parentCat.name}</span>
+                          <div className="fw-bold">{third.thirdCategoryName}</div>
+                          <small className="text-muted text-uppercase" style={{ fontSize: "10px", letterSpacing: "0.05em" }}>ID: {third.thirdCategoryId}</small>
                         </div>
                       </td>
                       <td style={{ maxWidth: 220 }}>
                         <p className="text-muted small mb-0" title={third.description} style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                          {third.description}
+                          {third.description || <span className="text-muted fst-italic">No description</span>}
                         </p>
+                      </td>
+                      <td>
+                        <span className="small fw-semibold text-dark">{parentSub.subCategoryName}</span>
+                      </td>
+                      <td>
+                        <div className="d-flex align-items-center gap-2 small text-muted">
+                          <i className={`bi ${parentCat.icon || "bi-folder"}`}></i>
+                          <span>{parentCat.categoryName}</span>
+                        </div>
                       </td>
                       <td>
                         <button
                           className="btn btn-sm border-0 bg-transparent p-0"
-                          onClick={() => toggleStatus(third._id)}
+                          onClick={() => toggleStatus(third)}
                           title="Click to toggle status"
                         >
                           <span className={`badge ${third.status === "Active" ? "bg-success text-white" : "bg-danger text-white"}`}>
@@ -346,7 +367,7 @@ const AdminThirdCategories = () => {
                         </button>
                       </td>
                       <td className="small text-muted">
-                        {new Date(third.createdAt).toLocaleDateString()}
+                        {third.createdAt ? new Date(third.createdAt).toLocaleDateString() : "—"}
                       </td>
                       <td>
                         <div className="d-flex gap-1">
@@ -359,7 +380,7 @@ const AdminThirdCategories = () => {
                           </button>
                           <button
                             className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDelete(third._id)}
+                            onClick={() => handleDelete(third.thirdCategoryId)}
                             title="Delete Third Category"
                           >
                             <i className="bi bi-trash"></i>
@@ -399,12 +420,25 @@ const AdminThirdCategories = () => {
                     <label className="form-label fw-semibold small">Third-category Name <span className="text-danger">*</span></label>
                     <input
                       type="text"
-                      className={`form-control ${errors.name ? "is-invalid" : ""}`}
+                      className={`form-control ${errors.thirdCategoryName ? "is-invalid" : ""}`}
                       placeholder="e.g. Frontend Development, Acoustic Guitar..."
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      value={form.thirdCategoryName}
+                      onChange={(e) => setForm({ ...form, thirdCategoryName: e.target.value })}
                     />
-                    {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                    {errors.thirdCategoryName && <div className="invalid-feedback">{errors.thirdCategoryName}</div>}
+                  </div>
+
+                  {/* Description */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold small">Description <span className="text-danger">*</span></label>
+                    <textarea
+                      className={`form-control ${errors.description ? "is-invalid" : ""}`}
+                      rows="3"
+                      placeholder="Describe what skills fall under this third-category..."
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    />
+                    {errors.description && <div className="invalid-feedback">{errors.description}</div>}
                   </div>
 
                   {/* Parent Category Selection */}
@@ -417,7 +451,7 @@ const AdminThirdCategories = () => {
                     >
                       <option value="">Choose main category...</option>
                       {categories.map((c) => (
-                        <option key={c._id} value={c._id}>{c.name}</option>
+                        <option key={c.categoryId} value={c.categoryId}>{c.categoryName}</option>
                       ))}
                     </select>
                     {errors.categoryId && <div className="invalid-feedback">{errors.categoryId}</div>}
@@ -436,36 +470,10 @@ const AdminThirdCategories = () => {
                         {!form.categoryId ? "Choose main category first..." : "Choose sub-category..."}
                       </option>
                       {modalSubCategories.map((sub) => (
-                        <option key={sub._id} value={sub._id}>{sub.name}</option>
+                        <option key={sub.subCategoryId} value={sub.subCategoryId}>{sub.subCategoryName}</option>
                       ))}
                     </select>
                     {errors.subCategoryId && <div className="invalid-feedback">{errors.subCategoryId}</div>}
-                  </div>
-
-                  {/* Description */}
-                  <div className="mb-3">
-                    <label className="form-label fw-semibold small">Description <span className="text-danger">*</span></label>
-                    <textarea
-                      className={`form-control ${errors.description ? "is-invalid" : ""}`}
-                      rows="3"
-                      placeholder="Describe the specific skill, tools, or libraries learned..."
-                      value={form.description}
-                      onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    />
-                    {errors.description && <div className="invalid-feedback">{errors.description}</div>}
-                  </div>
-
-                  {/* Status */}
-                  <div className="mb-3">
-                    <label className="form-label fw-semibold small">Status</label>
-                    <select
-                      className="form-select"
-                      value={form.status}
-                      onChange={(e) => setForm({ ...form, status: e.target.value })}
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
                   </div>
                 </div>
                 <div className="modal-footer border-0 pt-0">

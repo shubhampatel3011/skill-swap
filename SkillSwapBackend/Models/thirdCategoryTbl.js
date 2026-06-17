@@ -7,12 +7,14 @@ class thirdCategoryTbl {
 
     const [result] = await db.execute(
       `INSERT INTO thirdCategoryTbl
-      (categoryId, subCategoryId, thirdCategoryName)
-      VALUES (?, ?, ?)`,
+      (categoryId, subCategoryId, thirdCategoryName, description, status)
+      VALUES (?, ?, ?, ?, ?)`,
       [
         Model.categoryId,
         Model.subCategoryId,
-        Model.thirdCategoryName
+        Model.thirdCategoryName,
+        Model.description || "",
+        Model.status || "Active"
       ]
     );
 
@@ -62,12 +64,16 @@ class thirdCategoryTbl {
       `UPDATE thirdCategoryTbl
        SET categoryId=?,
            subCategoryId=?,
-           thirdCategoryName=?
+           thirdCategoryName=?,
+           description=?,
+           status=?
        WHERE thirdCategoryId=?`,
       [
         Model.categoryId,
         Model.subCategoryId,
         Model.thirdCategoryName,
+        Model.description || "",
+        Model.status || "Active",
         id
       ]
     );
