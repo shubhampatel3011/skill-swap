@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { MOCK_SKILLS, MOCK_USERS, CATEGORIES } from "../data/mockData";
 import { useAuth } from "../context/AuthContext";
 import SkillCard from "../components/SkillCard";
 import UserCard from "../components/UserCard";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const SkillsPage = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +17,37 @@ const SkillsPage = () => {
   const [viewMode, setViewMode] = useState("skills");
   const [sortBy, setSortBy] = useState("rating");
 
-  let skills = [...MOCK_SKILLS];
+  const [categories, setCategories] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchUsers();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3000/category"
+      );
+
+      setCategories(response.data.List);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/users");
+      setAllUsers(response.data.List || response.data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  let skills = [];
   if (query) skills = skills.filter((s) => s.title.toLowerCase().includes(query.toLowerCase()) || s.description.toLowerCase().includes(query.toLowerCase()) || s.category.toLowerCase().includes(query.toLowerCase()));
   if (category) skills = skills.filter((s) => s.category === category);
   if (mode) skills = skills.filter((s) => s.mode === mode || s.mode === "Both");
@@ -27,7 +57,7 @@ const SkillsPage = () => {
   else if (sortBy === "newest") skills.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   else if (sortBy === "reviews") skills.sort((a, b) => b.reviewCount - a.reviewCount);
 
-  const users = MOCK_USERS.filter((u) => u.role === "user" &&
+  const filteredUsers = allUsers.filter((u) => u.role === "user" &&
     (!query || u.name.toLowerCase().includes(query.toLowerCase()) || u.bio?.toLowerCase().includes(query.toLowerCase())));
 
   const handleRequestSwap = (skill) => {
@@ -83,7 +113,16 @@ const SkillsPage = () => {
               <label className="form-label small fw-semibold">Category</label>
               <select className="form-select form-select-sm" id="categoryFilter" value={category} onChange={(e) => setCategory(e.target.value)}>
                 <option value="">All Categories</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {
+                  categories.map((c) => (
+                    <option
+                      key={c.categoryId}
+                      value={c.categoryName}
+                    >
+                      {c.categoryName}
+                    </option>
+                  ))
+                }
               </select>
             </div>
 
@@ -151,7 +190,7 @@ const SkillsPage = () => {
             )
           ) : (
             <div className="row g-3">
-              {users.map((u) => (
+              {filteredUsers.map((u) => (
                 <div key={u._id} className="col-sm-6 col-xl-4">
                   <UserCard user={u} onSendRequest={user && u._id !== user._id ? () => toast.success(`Swap request sent to ${u.name}!`) : null} />
                 </div>

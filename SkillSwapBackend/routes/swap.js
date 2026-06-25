@@ -5,7 +5,7 @@ const swapTbl = require("../Models/swapTbl");
 // Get All Requests
 router.get("/", async (req, res) => {
   try {
-    const db = new swapRequestTbl();
+    const db = new swapTbl();
     const result = await db.GetList();
 
     res.status(200).json({
@@ -20,7 +20,7 @@ router.get("/", async (req, res) => {
 // Get Request By Id
 router.get("/:id", async (req, res) => {
   try {
-    const db = new swapRequestTbl();
+    const db = new swapTbl();
     const result = await db.GetById(req.params.id);
 
     res.status(200).json({
@@ -35,7 +35,7 @@ router.get("/:id", async (req, res) => {
 // Add Request
 router.post("/", async (req, res) => {
   try {
-    const db = new swapRequestTbl();
+    const db = new swapTbl();
     await db.AddRequest(req.body);
 
     res.status(200).json({
@@ -47,25 +47,29 @@ router.post("/", async (req, res) => {
 });
 
 // Update Status
-router.put("/:id", async (req, res) => {
+router.put("/:id/status", async (req, res) => {
   try {
-    const db = new swapRequestTbl();
+    const db = new swapTbl();
 
-    const result = await db.UpdateStatus(req.params.id, req.body.status);
+    await db.UpdateStatus(
+      req.params.id,
+      req.body.status
+    );
 
     res.status(200).json({
-      Message: "Status updated successfully.",
-      Data: result,
+      message: "Status updated"
     });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({
+      error: e.message
+    });
   }
 });
 
 // Delete Request
 router.delete("/:id", async (req, res) => {
   try {
-    const db = new swapRequestTbl();
+    const db = new swapTbl();
 
     const result = await db.DeleteRequest(req.params.id);
 

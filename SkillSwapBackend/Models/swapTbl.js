@@ -5,7 +5,7 @@ class swapRequestTbl {
     const db = await MyConnection();
 
     const [result] = await db.execute(
-      `INSERT INTO swapRequestTbl
+      `INSERT INTO swaptbl
       (SenderId, ReceiverId, OfferedSkillId,
       RequestedSkillId, Message, Status, ScheduledDate)
       VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -26,7 +26,7 @@ class swapRequestTbl {
 
   async GetList() {
     const db = await MyConnection();
-    const [result] = await db.execute("SELECT * FROM swapRequestTbl");
+    const [result] = await db.execute("SELECT * FROM swaptbl");
     db.end();
     return result;
   }
@@ -34,7 +34,7 @@ class swapRequestTbl {
   async GetById(id) {
     const db = await MyConnection();
     const [result] = await db.execute(
-      "SELECT * FROM swapRequestTbl WHERE swapId=?",
+      "SELECT * FROM swaptbl WHERE swapId=?",
       [id],
     );
     db.end();
@@ -42,24 +42,26 @@ class swapRequestTbl {
   }
 
   async UpdateStatus(id, status) {
-    const db = await MyConnection();
 
-    const [result] = await db.execute(
-      `UPDATE swapRequestTbl
-      SET Status=?
-      WHERE swapId=?`,
-      [status, id],
-    );
+  const db = await MyConnection();
 
-    db.end();
-    return result;
-  }
+  const [result] = await db.execute(
+    `UPDATE swapTbl
+     SET status=?
+     WHERE swapId=?`,
+    [status, id]
+  );
+
+  db.end();
+
+  return result;
+}
 
   async DeleteRequest(id) {
     const db = await MyConnection();
 
     const [result] = await db.execute(
-      "DELETE FROM swapRequestTbl WHERE swapId=?",
+      "DELETE FROM swaptbl WHERE swapId=?",
       [id],
     );
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { MOCK_SKILLS, MOCK_USERS } from "../data/mockData";
 import SkillCard from "../components/SkillCard";
 import StarRating from "../components/StarRating";
@@ -22,10 +23,15 @@ const faqs = [
 ];
 
 const HomePage = () => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const featuredSkills = MOCK_SKILLS.slice(0, 6);
   const topUsers = MOCK_USERS.filter((u) => u.role === "user").slice(0, 4);
+
+  const handleGetStarted = () => {
+    navigate(user ? "/skills" : "/register");
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -64,9 +70,9 @@ const HomePage = () => {
                 </button>
               </form>
               <div className="d-flex gap-3 flex-wrap">
-                <Link to="/register" className="btn ss-btn-primary btn-lg px-5">
+                <button onClick={handleGetStarted} className="btn ss-btn-primary btn-lg px-5">
                   Get Started <i className="bi bi-arrow-right ms-1"></i>
-                </Link>
+                </button>
                 <Link to="/skills" className="btn btn-outline-light btn-lg px-4">
                   Browse Skills
                 </Link>

@@ -1,16 +1,88 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { MOCK_SWAPS, MOCK_SKILLS, MOCK_NOTIFICATIONS } from "../data/mockData";
 import StarRating from "../components/StarRating";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const mySwaps = MOCK_SWAPS.filter((s) => s.senderId === user?._id || s.receiverId === user?._id);
-  const mySkills = MOCK_SKILLS.filter((s) => s.userId === user?._id);
-  const unreadNotifs = MOCK_NOTIFICATIONS.filter((n) => n.userId === user?._id && !n.isRead);
-  const activeSwaps = mySwaps.filter((s) => s.status === "Accepted");
-  const completed = mySwaps.filter((s) => s.status === "Completed");
-  const pending = mySwaps.filter((s) => s.status === "Pending");
+  const [mySwap, setMySwap] = useState([]);
+  const [mySkill, setMySkill] = useState([]);
+  const [notification, setNotification] = useState([]);
+
+
+  const getSkill = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3000/skills"
+      );
+      const skill = response.data.List.filter(
+        (skill) => skill.userId === user.userId
+      )
+      setMySkill(skill)
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const getSwap = async () => {
+    try {
+
+      const response = await axios.get(
+        "http://localhost:3000/swap"
+      );
+
+      const swap = response.data.List.filter(
+        (s) =>
+          s.senderId === user.userId ||
+          s.receiverId === user.userId
+      );
+
+      setMySwap(swap);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getNotification = async () => {
+    try {
+
+      const response = await axios.get(
+        `http://localhost:3000/notification/${user.userId}`
+      );
+
+      setNotification(response.data.List);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const unreadNotifs = notification.filter(
+    (n) => !n.isRead
+  );
+
+  const activeSwap = mySwap.filter(
+    (s) => s.status === "accepted"
+  );
+
+  const completed = mySwap.filter(
+    (s) => s.status === "completed"
+  );
+
+  const pending = mySwap.filter(
+    (s) => s.status === "pending"
+  );
+
+
+  useEffect(() => {
+    if (user) {
+      getSkill();
+      getSwap();
+      getNotification();
+    }
+  }, [user]);
 
   const quickLinks = [
     { to: "/skills/add", icon: "bi-plus-circle", label: "Add Skill", color: "primary" },
@@ -53,13 +125,13 @@ const DashboardPage = () => {
         {[
           {
             label: "My Skills",
-            val: mySkills.length,
+            val: mySkill.length,
             icon: "bi-mortarboard",
             color: "primary",
           },
           {
             label: "Active Swaps",
-            val: activeSwaps.length,
+            val: activeSwap.length,
             icon: "bi-arrow-left-right",
             color: "success",
           },
@@ -136,14 +208,14 @@ const DashboardPage = () => {
               </Link>
             </div>
             <div className="card-body">
-              {mySwaps.length === 0 && (
+              {mySwap.length === 0 && (
                 <p className="text-muted small text-center py-3">
                   No swaps yet. <Link to="/skills">Browse skills</Link> to
                   start!
                 </p>
               )}
-              {mySwaps.slice(0, 4).map((swap) => {
-                const isSender = swap.senderId === user?._id;
+              {mySwap.slice(0, 4).map((swap) => {
+                const isSender = swap.senderId === user?.userId;
                 const partner = isSender ? swap.receiverName : swap.senderName;
                 const partnerImg = isSender
                   ? swap.receiverImage
@@ -156,7 +228,7 @@ const DashboardPage = () => {
                 }[swap.status];
                 return (
                   <div
-                    key={swap._id}
+                    key={swap.userId}
                     className="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom"
                   >
                     <img
@@ -196,7 +268,7 @@ const DashboardPage = () => {
               </Link>
             </div>
             <div className="card-body">
-              {mySkills.length === 0 && (
+              {mySkill.length === 0 && (
                 <div className="text-center py-4">
                   <i className="bi bi-plus-circle display-5 text-muted d-block mb-2"></i>
                   <p className="text-muted small mb-3">No skills added yet</p>
@@ -205,9 +277,9 @@ const DashboardPage = () => {
                   </Link>
                 </div>
               )}
-              {mySkills.map((s) => (
+              {mySkill.map((s) => (
                 <div
-                  key={s._id}
+                  key={s.userId}
                   className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom"
                 >
                   <div

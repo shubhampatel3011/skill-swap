@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { CATEGORIES, EXPERIENCE_LEVELS, AVAILABILITY, MODES } from "../data/mockData";
+import { EXPERIENCE_LEVELS, AVAILABILITY, MODES } from "../data/mockData";
 import { toast } from "react-toastify";
 import axios from "axios";
 
@@ -13,6 +13,13 @@ const AddSkillPage = () => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    axios.get("http://localhost:3000/category")
+      .then((res) => setCategories(res.data.List || []))
+      .catch((err) => console.error("Failed to load categories:", err));
+  }, []);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -36,8 +43,6 @@ const AddSkillPage = () => {
       return;
     }
     setLoading(true);
-    
-    console.log("Logged User:", user);
 
     try{
       const skillData = {
@@ -72,7 +77,6 @@ const AddSkillPage = () => {
       setLoading(false);
     }
 
-
   };
 
   return (
@@ -99,7 +103,9 @@ const AddSkillPage = () => {
                 <select id="skillCategory" className={`form-select ${errors.category ? "is-invalid" : ""}`}
                   value={form.category} onChange={(e) => set("category", e.target.value)}>
                   <option value="">Choose a category...</option>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {categories.map((c) => (
+                    <option key={c.categoryId} value={c.categoryName}>{c.categoryName}</option>
+                  ))}
                 </select>
                 {errors.category && <div className="invalid-feedback">{errors.category}</div>}
               </div>

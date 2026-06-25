@@ -1,36 +1,116 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { MOCK_SWAPS } from "../data/mockData";
 import SwapRequestCard from "../components/SwapRequestCard";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const SwapRequestsPage = () => {
   const { user } = useAuth();
-  const [swaps, setSwaps] = useState(MOCK_SWAPS);
+  const [swaps, setSwaps] = useState([]);
   const [filter, setFilter] = useState("all");
 
-  const mySwaps = swaps.filter((s) => s.senderId === user?._id || s.receiverId === user?._id);
+  const getSwap = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/swap");
+      const swap = response.data.List.filter(
+        (s) =>
+          s.senderId === user.userId ||
+          s.receiverId === user.userId
+      );
+      setSwaps(swap);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      getSwap();
+    }
+  }, [user]);
+
+  const fetchSwaps = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3000/swap"
+      );
+
+      setSwaps(response.data.List);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const mySwaps = swaps.filter((s) => s.senderId === user?.userId || s.receiverId === user?.userId);
   const filtered = filter === "all" ? mySwaps : mySwaps.filter((s) => s.status === filter);
-  const incoming = mySwaps.filter((s) => s.receiverId === user?._id && s.status === "Pending");
-  const outgoing = mySwaps.filter((s) => s.senderId === user?._id && s.status === "Pending");
+  const incoming = mySwaps.filter((s) => s.receiverId === user?.userId && s.status === "Pending");
+  const outgoing = mySwaps.filter((s) => s.senderId === user?.userId && s.status === "Pending");
 
   const updateStatus = (id, newStatus) => {
     setSwaps((prev) => prev.map((s) => s._id === id ? { ...s, status: newStatus } : s));
   };
 
-  const handleAccept = (id) => {
-    updateStatus(id, "Accepted");
-    toast.success("Swap request accepted! Chat is now enabled.");
+  const handleAccept = async (id) => {
+    try {
+
+      await axios.put(
+        `http://localhost:3000/swap/${id}/status`,
+        {
+          status: "Accepted",
+        }
+      );
+
+      fetchSwaps();
+
+      toast.success(
+        "Swap request accepted!"
+      );
+
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleReject = (id) => {
-    updateStatus(id, "Rejected");
-    toast.info("Swap request declined.");
+  const handleReject = async (id) => {
+    try {
+
+      await axios.put(
+        `http://localhost:3000/swap/${id}/status`,
+        {
+          status: "Rejected",
+        }
+      );
+
+      fetchSwaps();
+
+      toast.info(
+        "Swap request declined."
+      );
+
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleComplete = (id) => {
-    updateStatus(id, "Completed");
-    toast.success("Marked as completed! Don't forget to leave a review.");
+  const handleComplete = async (id) => {
+    try {
+
+      await axios.put(
+        `http://localhost:3000/swap/${id}/status`,
+        {
+          status: "Completed",
+        }
+      );
+
+      fetchSwaps();
+
+      toast.success(
+        "Swap request completed!"
+      );
+
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const counts = {

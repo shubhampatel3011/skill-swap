@@ -76,6 +76,7 @@ const AdminCategories = () => {
     try {
       await axios.put(`http://localhost:3000/category/${currentCategory.categoryId}`, {
         CategoryName: form.name,
+        Icon: form.icon,
         Description: form.description,
         Status: form.status
       });
@@ -89,6 +90,7 @@ const AdminCategories = () => {
     try {
       await axios.post("http://localhost:3000/category", {
         CategoryName: form.name,
+        Icon: form.icon,
         Description: form.description,
         Status: form.status,
       });

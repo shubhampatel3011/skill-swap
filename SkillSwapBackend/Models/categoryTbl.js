@@ -6,10 +6,11 @@ class categoryTbl {
     const db = await MyConnection();
     const [result] = await db.execute(
       `INSERT INTO categoryTbl
-      (categoryName, description, status)
-      VALUES (?, ?, ?)`,
+      (categoryName, icon, description, status)
+      VALUES (?, ?, ?, ?)`,
       [
         Model.CategoryName,
+        Model.Icon || "bi-cpu",
         Model.Description,
         Model.Status,
       ],
@@ -62,9 +63,10 @@ class categoryTbl {
     const db = await MyConnection();
 
     const [result] = await db.execute(
-      "UPDATE categoryTbl SET categoryName=?, description=?, status=? WHERE categoryId=?",
+      "UPDATE categoryTbl SET categoryName=?, icon=?, description=?, status=? WHERE categoryId=?",
       [
         Model.CategoryName,
+        Model.Icon || "bi-cpu",
         Model.Description,
         Model.Status,
         id
