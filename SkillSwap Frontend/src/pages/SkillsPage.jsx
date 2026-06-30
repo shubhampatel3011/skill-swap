@@ -6,6 +6,8 @@ import UserCard from "../components/UserCard";
 import { toast } from "react-toastify";
 import axios from "axios";
 
+const API = "http://localhost:3000";
+
 const SkillsPage = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -19,19 +21,28 @@ const SkillsPage = () => {
 
   const [categories, setCategories] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [allSkills, setAllSkills] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // ── Swap Modal state ──────────────────────────────────────────────────────────
+  const [showModal, setShowModal] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState(null);
+  const [mySkills, setMySkills] = useState([]);
+  const [offeredSkillId, setOfferedSkillId] = useState("");
+  const [swapMessage, setSwapMessage] = useState("");
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [sending, setSending] = useState(false);
+
 
   useEffect(() => {
     fetchCategories();
     fetchUsers();
+    fetchSkills();
   }, []);
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:3000/category"
-      );
-
+      const response = await axios.get(`${API}/category`);
       setCategories(response.data.List);
     } catch (error) {
       console.log(error);
@@ -40,14 +51,48 @@ const SkillsPage = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/users");
+      const response = await axios.get(`${API}/users`);
       setAllUsers(response.data.List || response.data || []);
     } catch (error) {
       console.log(error);
     }
   };
 
-  let skills = [];
+  const fetchSkills = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/skills`);
+      setAllSkills(response.data.List || response.data || []);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMySkills = async () => {
+    if (!user) return;
+    try {
+      const res = await axios.get(`${API}/skills/user/${user.userId}`);
+      setMySkills(
+        (res.data.List || []).map((s) => ({
+          ...s,
+          _id: s.skillId ?? s._id,
+          title: s.Title ?? s.title ?? "",
+        }))
+      );
+    } catch (err) {
+      console.error("Failed to fetch your skills:", err);
+    }
+  };
+
+
+  let skills = [...allSkills];
+// hide logged in user 
+if(user){
+  skills = skills.filter((s) => s.userId !== user._id);
+}
+
   if (query) skills = skills.filter((s) => s.title.toLowerCase().includes(query.toLowerCase()) || s.description.toLowerCase().includes(query.toLowerCase()) || s.category.toLowerCase().includes(query.toLowerCase()));
   if (category) skills = skills.filter((s) => s.category === category);
   if (mode) skills = skills.filter((s) => s.mode === mode || s.mode === "Both");
@@ -62,8 +107,47 @@ const SkillsPage = () => {
 
   const handleRequestSwap = (skill) => {
     if (!user) { toast.warn("Please login to send a swap request"); return; }
-    toast.success(`Swap request sent for "${skill.title}"!`);
+    setSelectedSkill(skill);
+    setOfferedSkillId("");
+    setSwapMessage("");
+    setScheduledDate("");
+    fetchMySkills();
+    setShowModal(true);
   };
+
+  const handleSendRequest = async () => {
+    if (!offeredSkillId) { toast.warn("Please select a skill you'll offer."); return; }
+    setSending(true);
+    try {
+      // 1. Create swap record
+      await axios.post(`${API}/swap`, {
+        senderId: user.userId,
+        receiverId: selectedSkill.userId,
+        requestedSkillId: selectedSkill._id ?? selectedSkill.skillId,
+        offeredSkillId: Number(offeredSkillId),
+        message: swapMessage || "",
+        scheduledDate: scheduledDate || null,
+        status: "pending",
+      });
+
+      // 2. Notify the skill owner
+      await axios.post(`${API}/notification`, {
+        userId: selectedSkill.userId,
+        title: "New Swap Request",
+        message: `${user.name} sent you a swap request for "${selectedSkill.title || "a skill"}".`,
+        type: "swap_request",
+      });
+
+      toast.success(`Swap request sent for "${selectedSkill.title}"!`);
+      setShowModal(false);
+    } catch (err) {
+      console.error("Swap request failed:", err);
+      toast.error("Failed to send swap request. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
 
   const clearFilters = () => { setQuery(""); setCategory(""); setMode(""); setLevel(""); setAvailability(""); };
 
@@ -199,6 +283,80 @@ const SkillsPage = () => {
           )}
         </div>
       </div>
+      {/* Swap Request Modal */}
+      {showModal && selectedSkill && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header border-0">
+                <h5 className="modal-title fw-bold">Send Swap Request</h5>
+                <button className="btn-close" onClick={() => setShowModal(false)} disabled={sending}></button>
+              </div>
+              <div className="modal-body">
+                <p className="text-muted mb-3">
+                  Requesting: <strong>{selectedSkill.title}</strong> from{" "}
+                  <strong>{selectedSkill.userName || "this user"}</strong>
+                </p>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">What skill will you offer?</label>
+                  <select
+                    className="form-select"
+                    id="skillsPageOfferedSkill"
+                    value={offeredSkillId}
+                    onChange={(e) => setOfferedSkillId(e.target.value)}
+                  >
+                    <option value="">Choose a skill you'll teach...</option>
+                    {mySkills.map((s) => (
+                      <option key={s._id} value={s._id}>{s.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Message</label>
+                  <textarea
+                    className="form-control"
+                    rows={3}
+                    id="skillsPageSwapMessage"
+                    placeholder={`Hi! I'd love to swap skills with you...`}
+                    value={swapMessage}
+                    onChange={(e) => setSwapMessage(e.target.value)}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Preferred Timing</label>
+                  <input
+                    type="datetime-local"
+                    className="form-control"
+                    id="skillsPageSwapTiming"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer border-0">
+                <button
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowModal(false)}
+                  disabled={sending}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn ss-btn-primary"
+                  id="skillsPageSendSwapBtn"
+                  onClick={handleSendRequest}
+                  disabled={sending}
+                >
+                  {sending
+                    ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Sending…</>
+                    : <><i className="bi bi-send me-2"></i>Send Request</>
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

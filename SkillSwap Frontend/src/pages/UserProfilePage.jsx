@@ -1,20 +1,100 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
-import { MOCK_USERS, MOCK_SKILLS, MOCK_REVIEWS } from "../data/mockData";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import StarRating from "../components/StarRating";
 import SkillCard from "../components/SkillCard";
 import { toast } from "react-toastify";
+import axios from "axios";
+
+const API = "http://localhost:3000";
 
 const UserProfilePage = () => {
-  const { id } = useParams();
+  const { id } = useParams();      // id = the profile user's userId
   const { user } = useAuth();
-  const profileUser = MOCK_USERS.find((u) => u._id === id);
-  const skills = MOCK_SKILLS.filter((s) => s.userId === id);
-  const reviews = MOCK_REVIEWS.filter((r) => r.reviewedUserId === id);
+
+  const [profileUser, setProfileUser] = useState(null);
+  const [skills, setSkills] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [mySkills, setMySkills] = useState([]);  // logged-in user's skills to offer
+  const [pageLoading, setPageLoading] = useState(true);
+
   const [showModal, setShowModal] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState(null);
+  const [offeredSkillId, setOfferedSkillId] = useState("");
   const [message, setMessage] = useState("");
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [sending, setSending] = useState(false);
+
+  // Fetch profile user, their skills, reviews, and the logged-in user's own skills
+  useEffect(() => {
+    const fetchAll = async () => {
+      setPageLoading(true);
+      try {
+        const [usersRes, skillsRes, reviewsRes] = await Promise.all([
+          axios.get(`${API}/users`),
+          axios.get(`${API}/skills/user/${id}`),
+          axios.get(`${API}/review`).catch(() => ({ data: { List: [] } })),
+        ]);
+
+        const allUsers = usersRes.data.List || [];
+        const found = allUsers.find(
+          (u) => String(u.userId || u._id) === String(id)
+        );
+        setProfileUser(found || null);
+
+        const rawSkills = skillsRes.data.List || [];
+        setSkills(rawSkills.map(normalizeSkill));
+
+        const allReviews = reviewsRes.data.List || [];
+        setReviews(allReviews.filter((r) => String(r.receiverId ?? r.ReviewedUserId) === String(id)));
+      } catch (err) {
+        console.error("UserProfilePage fetch error:", err);
+      } finally {
+        setPageLoading(false);
+      }
+    };
+    fetchAll();
+  }, [id]);
+
+  // Fetch the logged-in user's skills whenever they open the modal
+  const fetchMySkills = async () => {
+    if (!user) return;
+    try {
+      const res = await axios.get(`${API}/skills/user/${user.userId}`);
+      setMySkills((res.data.List || []).map(normalizeSkill));
+    } catch (err) {
+      console.error("Failed to fetch your skills:", err);
+    }
+  };
+
+
+  /** Normalize PascalCase DB skill columns to camelCase */
+  const normalizeSkill = (s) => ({
+    ...s,
+    _id: s.skillId ?? s._id,
+    userId: s.userId ?? s.UserId,
+    title: s.Title ?? s.title ?? "",
+    description: s.Description ?? s.description ?? "",
+    category: s.Category ?? s.category ?? "",
+    experienceLevel: s.ExperienceLevel ?? s.experienceLevel ?? "",
+    availability: s.Availability ?? s.availability ?? "",
+    mode: s.Mode ?? s.mode ?? "",
+    rating: s.Rating ?? s.rating ?? 0,
+    reviewCount: s.ReviewCount ?? s.reviewCount ?? 0,
+    userName: s.UserName ?? s.userName ?? "",
+    userImage: s.UserImage ?? s.userImage ?? "",
+  });
+
+  if (pageLoading) {
+    return (
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading…</span>
+        </div>
+      </div>
+    );
+  }
+
 
   if (!profileUser) {
     return (
@@ -29,14 +109,49 @@ const UserProfilePage = () => {
   const handleRequestSwap = (skill) => {
     if (!user) { toast.warn("Please login to send a swap request"); return; }
     setSelectedSkill(skill);
+    setOfferedSkillId("");
+    setMessage("");
+    setScheduledDate("");
+    fetchMySkills();
     setShowModal(true);
   };
 
-  const handleSendRequest = () => {
-    setShowModal(false);
-    toast.success(`Swap request sent to ${profileUser.name}!`);
-    setMessage("");
+  const handleSendRequest = async () => {
+    if (!offeredSkillId) { toast.warn("Please select a skill you'll offer."); return; }
+    setSending(true);
+    try {
+      // 1. Create swap request
+      await axios.post(`${API}/swap`, {
+        senderId: user.userId,
+        receiverId: profileUser.userId ?? id,
+        requestedSkillId: selectedSkill?._id ?? null,
+        offeredSkillId: Number(offeredSkillId),
+        message: message || "",
+        scheduledDate: scheduledDate || null,
+        status: "pending",
+      });
+
+      // 2. Notify the receiver
+      await axios.post(`${API}/notification`, {
+        userId: profileUser.userId ?? id,
+        title: "New Swap Request",
+        message: `${user.name} sent you a swap request for "${selectedSkill?.title || "a skill"}".`,
+        type: "swap_request",
+      });
+
+      toast.success(`Swap request sent to ${profileUser.name}!`);
+      setShowModal(false);
+      setMessage("");
+      setScheduledDate("");
+      setOfferedSkillId("");
+    } catch (err) {
+      console.error("Swap request failed:", err);
+      toast.error("Failed to send swap request. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
+
 
   return (
     <div className="container py-5">
@@ -127,12 +242,16 @@ const UserProfilePage = () => {
                 <p className="text-muted mb-3">Requesting: <strong>{selectedSkill?.title}</strong> from <strong>{profileUser.name}</strong></p>
                 <div className="mb-3">
                   <label className="form-label fw-semibold">What skill will you offer?</label>
-                  <select className="form-select" id="swapOfferedSkill">
+                  <select
+                    className="form-select"
+                    id="swapOfferedSkill"
+                    value={offeredSkillId}
+                    onChange={(e) => setOfferedSkillId(e.target.value)}
+                  >
                     <option value="">Choose a skill you'll teach...</option>
-                    {MOCK_SKILLS.filter((s) => s.userId === user?._id).map((s) => (
+                    {mySkills.map((s) => (
                       <option key={s._id} value={s._id}>{s.title}</option>
                     ))}
-                    <option value="custom">Other skill (type below)</option>
                   </select>
                 </div>
                 <div className="mb-3">
@@ -143,13 +262,22 @@ const UserProfilePage = () => {
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-semibold">Preferred Timing</label>
-                  <input type="datetime-local" className="form-control" id="swapTiming" />
+                  <input type="datetime-local" className="form-control" id="swapTiming"
+                    value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
                 </div>
               </div>
               <div className="modal-footer border-0">
-                <button className="btn btn-outline-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button className="btn ss-btn-primary" onClick={handleSendRequest} id="sendSwapBtn">
-                  <i className="bi bi-send me-2"></i>Send Request
+                <button className="btn btn-outline-secondary" onClick={() => setShowModal(false)} disabled={sending}>Cancel</button>
+                <button
+                  className="btn ss-btn-primary"
+                  onClick={handleSendRequest}
+                  id="sendSwapBtn"
+                  disabled={sending}
+                >
+                  {sending
+                    ? <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Sending…</>
+                    : <><i className="bi bi-send me-2"></i>Send Request</>
+                  }
                 </button>
               </div>
             </div>

@@ -8,8 +8,28 @@ const typeIcon = {
 };
 
 const NotificationsPage = () => {
-  const { notifications, markRead, markAllRead } = useNotif();
+  const { notifications, markRead, markAllRead, deleteNotification, loading, error } = useNotif();
   const unread = notifications.filter((n) => !n.isRead).length;
+
+  if (loading) {
+    return (
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" role="status" aria-label="Loading notifications">
+          <span className="visually-hidden">Loading…</span>
+        </div>
+        <p className="text-muted mt-3">Loading notifications…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-5 text-center">
+        <i className="bi bi-exclamation-circle display-4 text-danger d-block mb-3"></i>
+        <h5 className="text-muted">{error}</h5>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-5">
@@ -38,15 +58,17 @@ const NotificationsPage = () => {
               <div
                 key={n._id}
                 className={`card border-0 shadow-sm p-3 ss-notif-card ${!n.isRead ? "ss-notif-card-unread" : ""}`}
-                onClick={() => markRead(n._id)}
                 style={{ cursor: "pointer" }}
               >
                 <div className="d-flex align-items-start gap-3">
-                  <div className={`ss-notif-icon-circle bg-${cfg.color} bg-opacity-15 text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0`}
-                    style={{ width: 44, height: 44 }}>
+                  <div
+                    className={`ss-notif-icon-circle bg-${cfg.color} bg-opacity-15 text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0`}
+                    style={{ width: 44, height: 44 }}
+                    onClick={() => markRead(n._id)}
+                  >
                     <i className={`bi ${cfg.icon} fs-5`}></i>
                   </div>
-                  <div className="flex-grow-1">
+                  <div className="flex-grow-1" onClick={() => markRead(n._id)}>
                     <div className="d-flex align-items-start justify-content-between gap-2">
                       <h6 className={`mb-1 ${!n.isRead ? "fw-bold" : "fw-semibold"}`}>{n.title}</h6>
                       {!n.isRead && <span className="ss-notif-dot flex-shrink-0 mt-1"></span>}
@@ -59,6 +81,14 @@ const NotificationsPage = () => {
                       })}
                     </small>
                   </div>
+                  <button
+                    className="btn btn-sm btn-link text-danger p-0 flex-shrink-0"
+                    title="Delete notification"
+                    id={`deleteNotif-${n._id}`}
+                    onClick={(e) => { e.stopPropagation(); deleteNotification(n._id); }}
+                  >
+                    <i className="bi bi-trash3"></i>
+                  </button>
                 </div>
               </div>
             );

@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotifProvider } from "./context/NotifContext";
 import { ProtectedRoute, AdminRoute } from "./components/ProtectedRoute";
 
@@ -37,11 +37,17 @@ const AdminLayout = ({ children }) => (
   <AdminRoute>{children}</AdminRoute>
 );
 
+/** Inner wrapper that reads auth state and passes userId to NotifProvider */
+const AppWithNotif = ({ children }) => {
+  const { user } = useAuth();
+  return <NotifProvider userId={user?.userId}>{children}</NotifProvider>;
+};
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <NotifProvider>
+        <AppWithNotif>
           <div className="d-flex flex-column min-vh-100">
             <Routes>
               {/* ── Admin Routes (no Navbar/Footer) ── */}
@@ -103,7 +109,7 @@ function App() {
             pauseOnHover
             theme="colored"
           />
-        </NotifProvider>
+        </AppWithNotif>
       </AuthProvider>
     </BrowserRouter>
   );
