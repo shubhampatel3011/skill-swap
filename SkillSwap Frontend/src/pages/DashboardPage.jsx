@@ -8,22 +8,30 @@ const DashboardPage = () => {
   const { user } = useAuth();
   const [mySwap, setMySwap] = useState([]);
   const [mySkill, setMySkill] = useState([]);
+  const [allSkills, setAllSkills] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [notification, setNotification] = useState([]);
 
 
   const getSkill = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:3000/skills"
-      );
-      const skill = response.data.List.filter(
-        (skill) => skill.userId === user.userId
-      )
-      setMySkill(skill)
+      const response = await axios.get("http://localhost:3000/skills");
+      const allSkillsList = response.data.List;
+      setAllSkills(allSkillsList);
+      setMySkill(allSkillsList.filter((skill) => skill.userId === user.userId));
     } catch (error) {
       console.log(error);
     }
-  }
+  };
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/users");
+      setAllUsers(response.data.List);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const getSwap = async () => {
     try {
@@ -64,25 +72,30 @@ const DashboardPage = () => {
   );
 
   const activeSwap = mySwap.filter(
-    (s) => s.status === "accepted"
+    (s) => s.status === "Accepted"
   );
 
   const completed = mySwap.filter(
-    (s) => s.status === "completed"
+    (s) => s.status === "Completed"
   );
 
   const pending = mySwap.filter(
-    (s) => s.status === "pending"
+    (s) => s.status === "Pending"
   );
 
 
   useEffect(() => {
     if (user) {
       getSkill();
+      getUsers();
       getSwap();
       getNotification();
     }
   }, [user]);
+
+  // Lookup maps built from fetched data
+  const skillMap = Object.fromEntries(allSkills.map((s) => [s.skillId, s.title]));
+  const userMap  = Object.fromEntries(allUsers.map((u) => [u.userId, u]));
 
   const quickLinks = [
     { to: "/skills/add", icon: "bi-plus-circle", label: "Add Skill", color: "primary" },
@@ -199,7 +212,7 @@ const DashboardPage = () => {
         <div className="col-lg-5">
           <div className="card border-0 shadow-sm h-100">
             <div className="card-header bg-transparent fw-bold border-0 pt-3 d-flex justify-content-between">
-              <span className="">
+              <span className="text-primary">
                 <i className="bi bi-arrow-left-right me-2 text-primary"></i>
                 Recent Swaps
               </span>
@@ -216,37 +229,46 @@ const DashboardPage = () => {
               )}
               {mySwap.slice(0, 4).map((swap) => {
                 const isSender = swap.senderId === user?.userId;
-                const partner = isSender ? swap.receiverName : swap.senderName;
-                const partnerImg = isSender
-                  ? swap.receiverImage
-                  : swap.senderImage;
-                const statusColor = {
-                  Pending: "warning",
-                  Accepted: "success",
-                  Rejected: "danger",
-                  Completed: "info",
-                }[swap.status];
+                const partnerId = isSender ? swap.receiverId : swap.senderId;
+                const partnerUser = userMap[partnerId];
+                const partner = user?.name || "Unknown";
+                const partnerImg = user?.profileImage || user?.image || null;
+                const offeredSkillName  = skillMap[swap.offeredSkillId]  || skillMap[swap.OfferedSkillId]  || "—";
+                const requestedSkillName = skillMap[swap.requestedSkillId] || skillMap[swap.RequestedSkillId] || "—";
+                const statusConfig = {
+                  Pending:   { color: "warning", textClass: "text-dark",    icon: "bi-clock-history" },
+                  Accepted:  { color: "success", textClass: "text-success", icon: "bi-check-circle" },
+                  Rejected:  { color: "danger",  textClass: "text-danger",  icon: "bi-x-circle" },
+                  Completed: { color: "info",    textClass: "text-info",    icon: "bi-trophy" },
+                };
+                const cfg = statusConfig[swap.status] || statusConfig.Pending;
                 return (
                   <div
-                    key={swap.userId}
-                    className="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom"
+                    key={swap.swapId}
+                    className="d-flex align-items-center gap-3 mb-3 pb-3 ps-3"
                   >
                     <img
-                      src={partnerImg}
-                      alt={partner}
-                      className="rounded-circle"
-                      width={40}
-                      height={40}
+                      src={partnerImg || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                      alt={partner || "User"}
+                      className="rounded-circle flex-shrink-0 object-fit-cover"
+                      style={{ width: 44, height: 44, objectFit: "cover" }}
                     />
-                    <div className="flex-grow-1">
-                      <div className="fw-semibold small">{partner}</div>
-                      <div className="text-muted" style={{ fontSize: "12px" }}>
-                        {swap.offeredSkill} ↔ {swap.requestedSkill}
+                    <div className="flex-grow-1 overflow-hidden">
+                      <div className="fw-semibold small text-truncate">{partner || "Unknown"}</div>
+                      <div className="text-muted text-truncate" style={{ fontSize: "11px" }}>
+                        <span className="text-primary fw-medium">{offeredSkillName}</span>
+                        {" "}<i className="bi bi-arrow-left-right mx-1" style={{ fontSize: "10px" }} />{" "}
+                        <span className="text-success fw-medium">{requestedSkillName}</span>
+                      </div>
+                      <div className="text-muted" style={{ fontSize: "10px" }}>
+                        {isSender ? "You sent" : "Received"}
                       </div>
                     </div>
                     <span
-                      className={`badge bg-${statusColor} bg-opacity-15 border border-${statusColor}`}
+                      className={`badge d-flex align-items-center gap-1 px-2 py-2 bg-${cfg.color} bg-opacity-15 border border-${cfg.color} ${cfg.textClass} flex-shrink-0`}
+                      style={{ fontSize: "11px" }}
                     >
+                      <i className={`bi ${cfg.icon}`} />
                       {swap.status}
                     </span>
                   </div>
@@ -279,7 +301,7 @@ const DashboardPage = () => {
               )}
               {mySkill.map((s) => (
                 <div
-                  key={s.userId}
+                  key={s.skillId}
                   className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom"
                 >
                   <div

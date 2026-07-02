@@ -6,10 +6,9 @@ class userTbl {
     const db = await MyConnection();
     const [result] = await db.execute(
       `INSERT INTO usertbl
-      (UserId, Name, Email, Mobile, Password, Address, Skills, Bio, Intrest)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (Name, Email, Mobile, Password, Address, Skills, Bio, Intrest)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        Model.UserId,
         Model.Name,
         Model.Email,
         Model.Mobile,

@@ -42,7 +42,6 @@ const RegisterPage = () => {
     setLoading(true);
     try {
       const userData = {
-        UserId: 1,
         Name: form.name,
         Email: form.email,
         Mobile: form.phone,
