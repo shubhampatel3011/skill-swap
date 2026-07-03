@@ -128,7 +128,7 @@ const UserProfilePage = () => {
         offeredSkillId: Number(offeredSkillId),
         message: message || "",
         scheduledDate: scheduledDate || null,
-        status: "pending",
+        status: "Pending",
       });
 
       // 2. Notify the receiver

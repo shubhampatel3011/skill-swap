@@ -127,7 +127,7 @@ if(user){
         offeredSkillId: Number(offeredSkillId),
         message: swapMessage || "",
         scheduledDate: scheduledDate || null,
-        status: "pending",
+        status: "Pending",
       });
 
       // 2. Notify the skill owner

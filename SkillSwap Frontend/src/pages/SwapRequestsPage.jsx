@@ -7,15 +7,27 @@ import axios from "axios";
 const SwapRequestsPage = () => {
   const { user } = useAuth();
   const [swaps, setSwaps] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [filter, setFilter] = useState("all");
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/users");
+      setAllUsers(response.data.List);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const getSwap = async () => {
     try {
       const response = await axios.get("http://localhost:3000/swap");
       const swap = response.data.List.filter(
-        (s) =>
-          s.senderId === user.userId ||
-          s.receiverId === user.userId
+        (s) => {
+          const { senderId, receiverId } = getSwapUsers(s);
+          return String(senderId) === String(user.userId) ||
+            String(receiverId) === String(user.userId);
+        }
       );
       setSwaps(swap);
     } catch (error) {
@@ -26,6 +38,7 @@ const SwapRequestsPage = () => {
   useEffect(() => {
     if (user) {
       getSwap();
+      getUsers();
     }
   }, [user]);
 
@@ -41,15 +54,26 @@ const SwapRequestsPage = () => {
     }
   };
 
-  const mySwaps = swaps.filter((s) => s.senderId === user?.userId || s.receiverId === user?.userId);
-  const filtered = filter === "all" ? mySwaps : mySwaps.filter((s) => s.status === filter);
-  const incoming = mySwaps.filter((s) => s.receiverId === user?.userId && s.status === "Pending");
-  const outgoing = mySwaps.filter((s) => s.senderId === user?.userId && s.status === "Pending");
+  const getSwapUsers = (swap) => ({
+    senderId: swap.senderId ?? swap.SenderId,
+    receiverId: swap.receiverId ?? swap.ReceiverId,
+  });
 
-  const updateStatus = (id, newStatus) => {
-    setSwaps((prev) => prev.map((s) => s._id === id ? { ...s, status: newStatus } : s));
+  const getSwapStatus = (swap) => {
+    const value = String(swap.status ?? swap.Status ?? "Pending").toLowerCase();
+    return value.charAt(0).toUpperCase() + value.slice(1);
   };
 
+  const uid = user?.userId;
+  const mySwaps = swaps.filter((s) => {
+    const { senderId, receiverId } = getSwapUsers(s);
+    return String(senderId) === String(uid) || String(receiverId) === String(uid);
+  });
+  const filtered = filter === "all" ? mySwaps : mySwaps.filter((s) => getSwapStatus(s) === filter);
+  const incoming = mySwaps.filter((s) => {
+    const { receiverId } = getSwapUsers(s);
+    return String(receiverId) === String(uid) && getSwapStatus(s) === "Pending";
+  });
   const handleAccept = async (id) => {
     try {
 
@@ -115,10 +139,10 @@ const SwapRequestsPage = () => {
 
   const counts = {
     all: mySwaps.length,
-    Pending: mySwaps.filter((s) => s.status === "Pending").length,
-    Accepted: mySwaps.filter((s) => s.status === "Accepted").length,
-    Completed: mySwaps.filter((s) => s.status === "Completed").length,
-    Rejected: mySwaps.filter((s) => s.status === "Rejected").length,
+    Pending: mySwaps.filter((s) => getSwapStatus(s) === "Pending").length,
+    Accepted: mySwaps.filter((s) => getSwapStatus(s) === "Accepted").length,
+    Completed: mySwaps.filter((s) => getSwapStatus(s) === "Completed").length,
+    Rejected: mySwaps.filter((s) => getSwapStatus(s) === "Rejected").length,
   };
 
   return (
@@ -186,16 +210,20 @@ const SwapRequestsPage = () => {
         </div>
       ) : (
         <div className="d-flex flex-column gap-3">
-          {filtered.map((swap) => (
-            <SwapRequestCard
-              key={swap._id}
-              swap={swap}
-              currentUserId={user?._id}
-              onAccept={handleAccept}
-              onReject={handleReject}
-              onComplete={handleComplete}
-            />
-          ))}
+          {filtered.map((swap) => {
+            const swapKey = swap._id ?? swap.swapId ?? swap.SwapId;
+            return (
+              <SwapRequestCard
+                key={swapKey}
+                swap={swap}
+                currentUserId={user.userId}
+                allUsers={allUsers} 
+                onAccept={handleAccept}
+                onReject={handleReject}
+                onComplete={handleComplete}
+              />
+            );
+          })}
         </div>
       )}
     </div>

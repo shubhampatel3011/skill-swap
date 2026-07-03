@@ -15,7 +15,7 @@ class swapRequestTbl {
         Model.offeredSkillId,
         Model.requestedSkillId,
         Model.message,
-        Model.status || "pending",
+        Model.status || "Pending",
         Model.scheduledDate,
       ],
     );

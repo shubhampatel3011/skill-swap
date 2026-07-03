@@ -93,9 +93,9 @@ const DashboardPage = () => {
     }
   }, [user]);
 
-  // Lookup maps built from fetched data
-  const skillMap = Object.fromEntries(allSkills.map((s) => [s.skillId, s.title]));
-  const userMap  = Object.fromEntries(allUsers.map((u) => [u.userId, u]));
+  // Lookup maps — handle both camelCase (userId) and PascalCase (UserId) from MySQL
+  const skillMap = Object.fromEntries(allSkills.map((s) => [s.skillId ?? s.SkillId, s.title ?? s.Title]));
+  const userMap  = Object.fromEntries(allUsers.map((u)  => [u.userId ?? u.UserId,  u]));
 
   const quickLinks = [
     { to: "/skills/add", icon: "bi-plus-circle", label: "Add Skill", color: "primary" },
@@ -228,11 +228,16 @@ const DashboardPage = () => {
                 </p>
               )}
               {mySwap.slice(0, 4).map((swap) => {
-                const isSender = swap.senderId === user?.userId;
-                const partnerId = isSender ? swap.receiverId : swap.senderId;
+                // Determine the opponent (partner) — not the logged-in user
+                // isSender = true  → current user sent the swap → opponent is the receiver
+                // isSender = false → current user received the swap → opponent is the sender
+                const isSender = (swap.senderId ?? swap.SenderId) === user?.userId;
+                const partnerId = isSender ? swap.receiverId ?? swap.ReceiverId
+                                           : swap.senderId   ?? swap.SenderId;
                 const partnerUser = userMap[partnerId];
-                const partner = user?.name || "Unknown";
-                const partnerImg = user?.profileImage || user?.image || null;
+                // Handle both camelCase and PascalCase field names returned by MySQL
+                const partner    = partnerUser?.name ?? partnerUser?.Name ?? "Unknown";
+                const partnerImg = partnerUser?.profileImage ?? partnerUser?.ProfileImage ?? null;
                 const offeredSkillName  = skillMap[swap.offeredSkillId]  || skillMap[swap.OfferedSkillId]  || "—";
                 const requestedSkillName = skillMap[swap.requestedSkillId] || skillMap[swap.RequestedSkillId] || "—";
                 const statusConfig = {
