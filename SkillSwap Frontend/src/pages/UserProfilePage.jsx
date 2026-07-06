@@ -121,11 +121,14 @@ const UserProfilePage = () => {
     setSending(true);
     try {
       // 1. Create swap request
+      const offeredSkillObj = mySkills.find((s) => String(s._id) === String(offeredSkillId));
       await axios.post(`${API}/swap`, {
         senderId: user.userId,
         receiverId: profileUser.userId ?? id,
         requestedSkillId: selectedSkill?._id ?? null,
+        requestedSkill: selectedSkill?.title ?? null,
         offeredSkillId: Number(offeredSkillId),
+        offeredSkill: offeredSkillObj?.title ?? null,
         message: message || "",
         scheduledDate: scheduledDate || null,
         status: "Pending",

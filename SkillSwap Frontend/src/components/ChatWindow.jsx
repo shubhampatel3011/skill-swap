@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
-const ChatWindow = ({ messages, onSend, partnerName, partnerImage }) => {
+const ChatWindow = ({ messages, onSend, partnerName, partnerImage, currentUserId }) => {
   const { user } = useAuth();
+  const myId = currentUserId ?? user?.userId ?? user?._id;
   const [text, setText] = useState("");
   const bottomRef = useRef(null);
 
@@ -40,7 +41,7 @@ const ChatWindow = ({ messages, onSend, partnerName, partnerImage }) => {
           </div>
         )}
         {messages.map((msg) => {
-          const isMine = msg.senderId === user?._id;
+          const isMine = String(msg.senderId) === String(myId);
           return (
             <div key={msg._id} className={`d-flex mb-3 ${isMine ? "justify-content-end" : "justify-content-start"}`}>
               {!isMine && (

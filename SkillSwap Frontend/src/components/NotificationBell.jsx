@@ -1,8 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useNotif } from "../context/NotifContext";
 
 const NotificationBell = () => {
   const { notifications, unreadCount, markRead } = useNotif();
+  const navigate = useNavigate();
   const recent = notifications.slice(0, 5);
 
   const typeIcon = {
@@ -10,6 +11,11 @@ const NotificationBell = () => {
     swap_accepted: "bi-check-circle text-success",
     message: "bi-chat-dots text-info",
     review: "bi-star text-warning",
+  };
+
+  const handleItemClick = async (n) => {
+    await markRead(n._id);
+    if (n.link) navigate(n.link);
   };
 
   return (
@@ -43,7 +49,7 @@ const NotificationBell = () => {
           <div
             key={n._id}
             className={`d-flex gap-3 px-3 py-2 border-bottom ss-notif-item ${!n.isRead ? "ss-notif-unread" : ""}`}
-            onClick={() => markRead(n._id)}
+            onClick={() => handleItemClick(n)}
             style={{ cursor: "pointer" }}
           >
             <div className="ss-notif-icon mt-1">

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useNotif } from "../context/NotifContext";
 
 const typeIcon = {
@@ -9,7 +10,13 @@ const typeIcon = {
 
 const NotificationsPage = () => {
   const { notifications, markRead, markAllRead, deleteNotification, loading, error } = useNotif();
+  const navigate = useNavigate();
   const unread = notifications.filter((n) => !n.isRead).length;
+
+  const handleNotifClick = async (n) => {
+    await markRead(n._id);
+    if (n.link) navigate(n.link);
+  };
 
   if (loading) {
     return (
@@ -58,20 +65,27 @@ const NotificationsPage = () => {
               <div
                 key={n._id}
                 className={`card border-0 shadow-sm p-3 ss-notif-card ${!n.isRead ? "ss-notif-card-unread" : ""}`}
-                style={{ cursor: "pointer" }}
+                style={{ cursor: n.link ? "pointer" : "default" }}
+                onClick={() => handleNotifClick(n)}
               >
                 <div className="d-flex align-items-start gap-3">
                   <div
                     className={`ss-notif-icon-circle bg-${cfg.color} bg-opacity-15 text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0`}
                     style={{ width: 44, height: 44 }}
-                    onClick={() => markRead(n._id)}
                   >
                     <i className={`bi ${cfg.icon} fs-5`}></i>
                   </div>
-                  <div className="flex-grow-1" onClick={() => markRead(n._id)}>
+                  <div className="flex-grow-1">
                     <div className="d-flex align-items-start justify-content-between gap-2">
                       <h6 className={`mb-1 ${!n.isRead ? "fw-bold" : "fw-semibold"}`}>{n.title}</h6>
-                      {!n.isRead && <span className="ss-notif-dot flex-shrink-0 mt-1"></span>}
+                      <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                        {!n.isRead && <span className="ss-notif-dot mt-1"></span>}
+                        {n.link && (
+                          <span className="badge bg-info bg-opacity-15 text-info border border-info" style={{ fontSize: "10px" }}>
+                            <i className="bi bi-box-arrow-up-right me-1"></i>Open
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="text-muted small mb-1">{n.message}</p>
                     <small className="text-muted">

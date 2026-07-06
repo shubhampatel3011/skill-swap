@@ -20,6 +20,7 @@ import SkillsPage from "./pages/SkillsPage";
 import AddSkillPage from "./pages/AddSkillPage";
 import SwapRequestsPage from "./pages/SwapRequestsPage";
 import ChatPage from "./pages/ChatPage";
+import ChatsListPage from "./pages/ChatsListPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import FeedbackPage from "./pages/FeedbackPage";
@@ -79,6 +80,7 @@ function App() {
                       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                       <Route path="/skills/add" element={<ProtectedRoute><AddSkillPage /></ProtectedRoute>} />
                       <Route path="/swaps" element={<ProtectedRoute><SwapRequestsPage /></ProtectedRoute>} />
+                      <Route path="/chats" element={<ProtectedRoute><ChatsListPage /></ProtectedRoute>} />
                       <Route path="/chat/:swapId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
                       <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
                       <Route path="/reviews" element={<ProtectedRoute><ReviewsPage /></ProtectedRoute>} />

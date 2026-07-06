@@ -1,26 +1,155 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { MOCK_SWAPS, MOCK_MESSAGES, MOCK_USERS } from "../data/mockData";
 import { useAuth } from "../context/AuthContext";
 import ChatWindow from "../components/ChatWindow";
+import axios from "axios";
+
+const API = "http://localhost:3000";
 
 const ChatPage = () => {
   const { swapId } = useParams();
   const { user } = useAuth();
-  const swap = MOCK_SWAPS.find((s) => s._id === swapId);
-  const [messages, setMessages] = useState(MOCK_MESSAGES[swapId] || []);
 
-  if (!swap) {
+  const [swap, setSwap] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [partnerUser, setPartnerUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch swap details + partner user info
+  const fetchSwap = useCallback(async () => {
+    try {
+      const [swapRes, usersRes] = await Promise.all([
+        axios.get(`${API}/swap/${swapId}`),
+        axios.get(`${API}/users`),
+      ]);
+
+      const swapData = swapRes.data.Data?.[0] ?? swapRes.data.Data;
+      if (!swapData) { setError("Swap not found."); setLoading(false); return; }
+
+      setSwap(swapData);
+
+      const allUsers = usersRes.data.List || [];
+      const senderId   = swapData.senderId   ?? swapData.SenderId;
+      const receiverId = swapData.receiverId ?? swapData.ReceiverId;
+      const senderName   = swapData.senderName   ?? swapData.SenderName;
+      const myId       = String(user?.userId);
+      const partnerId  = String(senderId) === myId ? receiverId : senderId;
+
+      const found = allUsers.find((u) => String(u.userId ?? u.UserId) === String(partnerId));
+      setPartnerUser(found || null);
+    } catch (err) {
+      setError("Failed to load chat.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [swapId, user]);
+
+  // Fetch messages for this swap
+  const fetchMessages = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/message/${swapId}`);
+      const list = res.data.List || [];
+      // Normalize DB column names to what ChatWindow expects
+      setMessages(
+        list.map((m) => ({
+          _id:       m.messageId ?? m.MessageId ?? m._id,
+          senderId:  m.senderId  ?? m.SenderId,
+          senderName: m.senderName  ?? m.SenderName,
+          text:      m.message   ?? m.Message ?? m.text,
+          timestamp: m.createdAt ?? m.CreatedAt ?? m.timestamp,
+        }))
+      );
+    } catch (err) {
+      console.error("Failed to load messages:", err);
+    }
+  }, [swapId]);
+
+  useEffect(() => {
+    if (user) {
+      fetchSwap();
+      fetchMessages();
+    }
+  }, [fetchSwap, fetchMessages, user]);
+
+  // Poll for new messages every 5 seconds while the page is open
+  useEffect(() => {
+    const interval = setInterval(fetchMessages, 5000);
+    return () => clearInterval(interval);
+  }, [fetchMessages]);
+
+  // Throttle: only send a notification once per 60 s per conversation
+  const lastNotifiedRef = useRef(0);
+
+  const handleSend = async (text) => {
+    if (!user || !swap) return;
+    const senderId   = swap.senderId   ?? swap.SenderId;
+    const senderName   = swap.senderName   ?? swap.SenderName;
+    const receiverId = swap.receiverId ?? swap.ReceiverId;
+    const myId       = String(user.userId);
+    const partnerId  = String(senderId) === myId ? receiverId : senderId;
+
+    // Optimistic UI update
+    setMessages((prev) => [
+      ...prev,
+      {
+        _id:       `temp_${Date.now()}`,
+        senderId:  user.userId,
+        text,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+
+    try {
+      await axios.post(`${API}/message`, {
+        swapId:     Number(swapId),
+        senderId:   user.userId,
+        receiverId: partnerId,
+        message:    text,
+      });
+
+      // Send a notification to the partner (throttled to once per 60 s)
+      const now = Date.now();
+      if (now - lastNotifiedRef.current > 60_000) {
+        lastNotifiedRef.current = now;
+        await axios.post(`${API}/notification`, {
+          userId:  partnerId,
+          title:   "New Message",
+          message: `${user.name} sent you a message.`,
+          type:    "message",
+          link:    `/chat/${swapId}`,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
+  };
+
+  /* ── Guards ── */
+  if (loading) {
+    return (
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading…</span>
+        </div>
+        <p className="text-muted mt-3">Loading chat…</p>
+      </div>
+    );
+  }
+
+  if (error || !swap) {
     return (
       <div className="container py-5 text-center">
         <i className="bi bi-chat-x display-1 text-muted"></i>
-        <h3 className="mt-3">Chat not found</h3>
+        <h3 className="mt-3">{error || "Chat not found"}</h3>
         <Link to="/swaps" className="btn ss-btn-primary mt-3">Back to Swaps</Link>
       </div>
     );
   }
 
-  if (swap.status !== "Accepted" && swap.status !== "Completed") {
+  const status = String(swap.status ?? swap.Status ?? "").toLowerCase();
+  if (status !== "accepted" && status !== "completed") {
     return (
       <div className="container py-5 text-center">
         <i className="bi bi-lock display-1 text-muted"></i>
@@ -31,19 +160,13 @@ const ChatPage = () => {
     );
   }
 
-  const isSender = swap.senderId === user?._id;
-  const partner = {
-    name: isSender ? swap.receiverName : swap.senderName,
-    image: isSender ? swap.receiverImage : swap.senderImage,
-    id: isSender ? swap.receiverId : swap.senderId,
-  };
+  const partnerName  = partnerUser?.name  ?? partnerUser?.Name  ?? "Partner";
+  const partnerImage = partnerUser?.profileImage ?? partnerUser?.ProfileImage
+    ?? "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  const partnerId    = partnerUser?.userId ?? partnerUser?.UserId;
 
-  const handleSend = (text) => {
-    setMessages((prev) => [
-      ...prev,
-      { _id: `m_${Date.now()}`, senderId: user?._id, text, timestamp: new Date().toISOString() },
-    ]);
-  };
+  const offeredSkill   = swap.offeredSkill   ?? swap.OfferedSkill   ?? "-";
+  const requestedSkill = swap.requestedSkill ?? swap.RequestedSkill ?? "-";
 
   return (
     <div className="container py-4">
@@ -57,21 +180,24 @@ const ChatPage = () => {
                   <i className="bi bi-arrow-left"></i>
                 </Link>
                 <div>
-                  <h6 className="fw-bold mb-0">Swap Chat with {partner.name}</h6>
+                  <h6 className="fw-bold mb-0">Swap Chat with {partnerName}</h6>
                   <small className="text-muted">
-                    <span className="text-primary">{swap.offeredSkill}</span>
+                    <span className="text-primary">{offeredSkill}</span>
                     {" "}<i className="bi bi-arrow-left-right"></i>{" "}
-                    <span className="text-success">{swap.requestedSkill}</span>
+                    <span className="text-success">{requestedSkill}</span>
                   </small>
                 </div>
               </div>
               <div className="d-flex gap-2">
                 <span className="badge bg-success bg-opacity-15 text-success border border-success px-2 py-1">
-                  <i className="bi bi-check-circle me-1"></i>{swap.status}
+                  <i className="bi bi-check-circle me-1"></i>
+                  {swap.status ?? swap.Status}
                 </span>
-                <Link to={`/users/${partner.id}`} className="btn btn-sm btn-outline-secondary">
-                  <i className="bi bi-person me-1"></i>Profile
-                </Link>
+                {partnerId && (
+                  <Link to={`/users/${partnerId}`} className="btn btn-sm btn-outline-secondary">
+                    <i className="bi bi-person me-1"></i>Profile
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -80,20 +206,22 @@ const ChatPage = () => {
           <div className="card border-0 shadow-sm overflow-hidden" style={{ height: "520px" }}>
             <ChatWindow
               messages={messages}
+              currentUserId={user?.userId}
               onSend={handleSend}
-              partnerName={partner.name}
-              partnerImage={partner.image}
+              partnerName={partnerName}
+              partnerImage={partnerImage}
             />
           </div>
 
           {/* Session Info */}
-          {swap.scheduledDate && (
+          {(swap.scheduledDate ?? swap.ScheduledDate) && (
             <div className="alert alert-info d-flex align-items-center gap-2 mt-3 mb-0">
               <i className="bi bi-calendar-event fs-5"></i>
               <div>
                 <strong>Session Scheduled:</strong>{" "}
-                {new Date(swap.scheduledDate).toLocaleString("en-IN", {
-                  weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
+                {new Date(swap.scheduledDate ?? swap.ScheduledDate).toLocaleString("en-IN", {
+                  weekday: "long", day: "numeric", month: "long",
+                  year: "numeric", hour: "2-digit", minute: "2-digit",
                 })}
               </div>
             </div>

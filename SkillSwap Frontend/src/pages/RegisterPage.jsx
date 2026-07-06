@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
-import { CATEGORIES } from "../data/mockData";
 import axios from "axios";
 
 const RegisterPage = () => {
@@ -12,9 +11,16 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", password: "", confirmPassword: "",
-    location: "", bio: "", skillsOffered: [], skillsWanted: [],
+    location: "", bio: "", category: "", skillsWanted: [],
   });
   const [errors, setErrors] = useState({});
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    axios.get("http://localhost:3000/category")
+      .then((res) => setCategories(res.data.List || []))
+      .catch((err) => console.error("Failed to load categories:", err));
+  }, []);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -27,6 +33,8 @@ const RegisterPage = () => {
     if (!form.password) e.password = "Password is required";
     else if (form.password.length < 6) e.password = "Min 6 characters";
     if (form.password !== form.confirmPassword) e.confirmPassword = "Passwords don't match";
+    if (!form.category) e.category = "Select a category";
+
     return e;
   };
 
@@ -165,10 +173,14 @@ const RegisterPage = () => {
                     </div>
                     <div className="col-12">
                       <label className="form-label fw-semibold">Skills I Can Teach</label>
-                      <input type="text" className="form-control" id="regSkillsOffer"
-                        placeholder="React, Photography, Yoga (comma separated)"
-                        value={form.skillsOffered.join(", ")}
-                        onChange={(e) => set("skillsOffered", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
+                      <select id="skillCategory" className={`form-select ${errors.category ? "is-invalid" : ""}`}
+                        value={form.category} onChange={(e) => set("category", e.target.value)}>
+                        <option value="">Choose a category...</option>
+                        {categories.map((c) => (
+                          <option key={c.categoryId} value={c.categoryName}>{c.categoryName}</option>
+                        ))}
+                      </select>
+                      {errors.category && <div className="invalid-feedback">{errors.category}</div>}
                     </div>
                     <div className="col-12">
                       <label className="form-label fw-semibold">Skills I Want to Learn</label>

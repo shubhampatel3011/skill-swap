@@ -13,6 +13,7 @@ const normalizeNotif = (raw) => ({
   message: raw.Message ?? raw.message ?? "",
   isRead: Boolean(raw.IsRead ?? raw.isRead),
   type: raw.Type ?? raw.type ?? "general",
+  link: raw.Link ?? raw.link ?? null,
   createdAt: raw.CreatedAt ?? raw.createdAt ?? new Date().toISOString(),
 });
 

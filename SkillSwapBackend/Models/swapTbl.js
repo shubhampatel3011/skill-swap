@@ -6,14 +6,16 @@ class swapRequestTbl {
 
     const [result] = await db.execute(
       `INSERT INTO swaptbl
-      (SenderId, ReceiverId, OfferedSkillId,
-      RequestedSkillId, Message, Status, ScheduledDate)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      (SenderId, ReceiverId, OfferedSkillId, OfferedSkill,
+      RequestedSkillId, RequestedSkill, Message, Status, ScheduledDate)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         Model.senderId,
         Model.receiverId,
         Model.offeredSkillId,
+        Model.offeredSkill,
         Model.requestedSkillId,
+        Model.requestedSkill,
         Model.message,
         Model.status || "Pending",
         Model.scheduledDate,
@@ -42,20 +44,18 @@ class swapRequestTbl {
   }
 
   async UpdateStatus(id, status) {
+    const db = await MyConnection();
 
-  const db = await MyConnection();
+    const [result] = await db.execute(
+      `UPDATE swapTbl
+       SET status=?
+       WHERE swapId=?`,
+      [status, id],
+    );
 
-  const [result] = await db.execute(
-    `UPDATE swapTbl
-     SET status=?
-     WHERE swapId=?`,
-    [status, id]
-  );
-
-  db.end();
-
-  return result;
-}
+    db.end();
+    return result;
+  }
 
   async DeleteRequest(id) {
     const db = await MyConnection();

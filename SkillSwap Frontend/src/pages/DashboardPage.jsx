@@ -161,7 +161,7 @@ const DashboardPage = () => {
             color: "info",
           },
           {
-            label: "Unread Notifs",
+            label: "Unread Notifications",
             val: unreadNotifs.length,
             icon: "bi-bell",
             color: "danger",
@@ -241,10 +241,10 @@ const DashboardPage = () => {
                 const offeredSkillName  = skillMap[swap.offeredSkillId]  || skillMap[swap.OfferedSkillId]  || "—";
                 const requestedSkillName = skillMap[swap.requestedSkillId] || skillMap[swap.RequestedSkillId] || "—";
                 const statusConfig = {
-                  Pending:   { color: "warning", textClass: "text-dark",    icon: "bi-clock-history" },
-                  Accepted:  { color: "success", textClass: "text-success", icon: "bi-check-circle" },
-                  Rejected:  { color: "danger",  textClass: "text-danger",  icon: "bi-x-circle" },
-                  Completed: { color: "info",    textClass: "text-info",    icon: "bi-trophy" },
+                  Pending:   { color: "warning", icon: "bi-clock-history" },
+                  Accepted:  { color: "success", icon: "bi-check-circle" },
+                  Rejected:  { color: "danger", icon: "bi-x-circle" },
+                  Completed: { color: "info", icon: "bi-trophy" },
                 };
                 const cfg = statusConfig[swap.status] || statusConfig.Pending;
                 return (

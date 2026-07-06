@@ -49,6 +49,11 @@ const Navbar = () => {
                     <i className="bi bi-arrow-left-right me-1"></i>Swaps
                   </NavLink>
                 </li>
+                <li className="nav-item">
+                  <NavLink className="nav-link ss-nav-link" to="/chats">
+                    <i className="bi bi-chat-dots me-1"></i>Chat
+                  </NavLink>
+                </li>
                 {user.role === "admin" && (
                   <li className="nav-item">
                     <NavLink
