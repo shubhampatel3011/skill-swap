@@ -6,9 +6,9 @@ class notificationTbl {
 
     const [result] = await db.execute(
       `INSERT INTO notificationTbl
-      (UserId, Title, Message, IsRead, Type, Link)
-      VALUES (?, ?, ?, ?, ?, ?)`,
-      [Model.userId, Model.title, Model.message, 0, Model.type || 'general', Model.link || null],
+      (userId, title, message, isRead)
+      VALUES (?, ?, ?, ?)`,
+      [Model.userId, Model.title, Model.message, 0],
     );
 
     db.end();

@@ -9,6 +9,7 @@ const ChatsListPage = () => {
   const { user } = useAuth();
   const [chats, setChats] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [allSkills, setAllSkills] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -96,9 +97,11 @@ const ChatsListPage = () => {
       ) : (
         <div className="d-flex flex-column gap-3">
           {chats.map((swap) => {
-            const swapId         = swap.swapId ?? swap.SwapId ?? swap._id;
-            const offeredSkill   = swap.offeredSkill   ?? swap.OfferedSkill   ?? "—";
-            const requestedSkill = swap.requestedSkill ?? swap.RequestedSkill ?? "—";
+            console.log("Swap Data:", swap);
+
+            const swapId = swap.swapId ?? swap.SwapId ?? swap._id;
+            const offeredSkillName = swap.offeredSkill ?? swap.OfferedSkill ?? "Skill";
+            const requestedSkillName = swap.requestedSkill ?? swap.RequestedSkill ?? "Skill";
             const { partnerId, partnerUser } = getPartner(swap);
 
             const partnerName  = partnerUser?.name  ?? partnerUser?.Name  ?? "User";
@@ -133,19 +136,17 @@ const ChatsListPage = () => {
                     <div className="flex-grow-1 min-w-0">
                       <div className="d-flex align-items-center justify-content-between gap-2">
                         <h6 className="fw-bold mb-0 text-truncate">{partnerName}</h6>
-                        <span className="badge bg-success bg-opacity-15 text-success border border-success flex-shrink-0">
+                        <span className="badge bg-success bg-opacity-15 text-light border border-success flex-shrink-0">
                           <i className="bi bi-check-circle me-1"></i>Accepted
                         </span>
                       </div>
-                      <div className="mt-1 d-flex align-items-center gap-2 flex-wrap">
-                        <span className="badge bg-primary bg-opacity-10 text-primary border border-primary small">
-                          <i className="bi bi-mortarboard me-1"></i>{offeredSkill}
-                        </span>
-                        <i className="bi bi-arrow-left-right text-muted small"></i>
-                        <span className="badge bg-success bg-opacity-10 text-success border border-success small">
-                          <i className="bi bi-lightbulb me-1"></i>{requestedSkill}
-                        </span>
-                      </div>
+                      <p className="text-muted small mb-0 mt-1">
+                        <i className="bi bi-mortarboard me-1"></i>
+                        {offeredSkillName}
+                        <span className="mx-2">•</span>
+                        <i className="bi bi-lightbulb me-1"></i>
+                        {requestedSkillName}
+                      </p>
                     </div>
 
                     {/* Arrow */}

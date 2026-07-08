@@ -5,21 +5,21 @@ import { toast } from "react-toastify";
 import axios from "axios";
 
 const RegisterPage = () => {
-  const { register } = useAuth();
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", password: "", confirmPassword: "",
-    location: "", bio: "", category: "", skillsWanted: [],
+    location: "", bio: "", subCategory: "", skillsWanted: [],
   });
   const [errors, setErrors] = useState({});
-  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:3000/category")
-      .then((res) => setCategories(res.data.List || []))
-      .catch((err) => console.error("Failed to load categories:", err));
+    axios.get("http://localhost:3000/subCategory")
+      .then((res) => setSubCategories(res.data.List || []))
+      .catch((err) => console.error("Failed to load subCategories:", err));
   }, []);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -32,9 +32,15 @@ const RegisterPage = () => {
     if (!form.phone) e.phone = "Phone is required";
     if (!form.password) e.password = "Password is required";
     else if (form.password.length < 6) e.password = "Min 6 characters";
+    if (!form.confirmPassword) e.confirmPassword = "Confirm your password";
     if (form.password !== form.confirmPassword) e.confirmPassword = "Passwords don't match";
-    if (!form.category) e.category = "Select a category";
 
+    return e;
+  };
+
+  const validateStep2 = () => {
+    const e = {};
+    if (!form.subCategory) e.subCategory = "Select a subCategory";
     return e;
   };
 
@@ -47,6 +53,12 @@ const RegisterPage = () => {
  
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const v = validateStep2();
+    if (Object.keys(v).length) {
+      setErrors(v);
+      return;
+    }
+
     setLoading(true);
     try {
       const userData = {
@@ -55,20 +67,22 @@ const RegisterPage = () => {
         Mobile: form.phone,
         Password: form.password,
         Address: form.location,
-        Skills: form.skillsOffered.join(", "),
+        Skills: form.subCategory,
         Bio: form.bio,
         Intrest: form.skillsWanted.join(", "),
-      }
+      };
 
       console.log("Sending data:", userData);
 
-      const response = await axios.post(
-        "http://localhost:3000/users",
-        userData
-      );
+      const response = await axios.post("http://localhost:3000/users", userData);
+      const loginResponse = await axios.post("http://localhost:3000/users/login", {
+        Email: form.email,
+        Password: form.password,
+      });
 
       toast.success(response.data.Message);
-      navigate("/dashboard");
+      login(loginResponse.data.User);
+      navigate("/dashboard", { replace: true });
 
     } catch (error) {
       console.error("Registration error:", error.response?.data || error.message);
@@ -96,7 +110,9 @@ const RegisterPage = () => {
                 <div className="ss-step-line flex-grow-1"></div>
                 <div className={`ss-step-dot ${step >= 2 ? "active" : ""}`}>2</div>
                 <div className="ss-step-line flex-grow-1"></div>
-                <div className={`ss-step-dot ${step >= 2 ? "active" : ""}`}>✓</div>
+                <div className={`ss-step-dot ${step >= 2 ? "active" : ""}`}>
+                  <i className="bi bi-check-lg"></i>
+                </div>
               </div>
 
               {step === 1 && (
@@ -155,7 +171,7 @@ const RegisterPage = () => {
               )}
 
               {step === 2 && (
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                   <div className="row g-3">
                     <div className="col-12">
                       <label className="form-label fw-semibold">Location</label>
@@ -173,14 +189,14 @@ const RegisterPage = () => {
                     </div>
                     <div className="col-12">
                       <label className="form-label fw-semibold">Skills I Can Teach</label>
-                      <select id="skillCategory" className={`form-select ${errors.category ? "is-invalid" : ""}`}
-                        value={form.category} onChange={(e) => set("category", e.target.value)}>
-                        <option value="">Choose a category...</option>
-                        {categories.map((c) => (
-                          <option key={c.categoryId} value={c.categoryName}>{c.categoryName}</option>
+                      <select id="skillCategory" className={`form-select ${errors.subCategory ? "is-invalid" : ""}`}
+                        value={form.subCategory} onChange={(e) => set("subCategory", e.target.value)}>
+                        <option value="">Choose a subCategory...</option>
+                        {subCategories.map((c) => (
+                          <option key={c.subCategoryId} value={c.subCategoryName}>{c.subCategoryName}</option>
                         ))}
                       </select>
-                      {errors.category && <div className="invalid-feedback">{errors.category}</div>}
+                      {errors.subCategory && <div className="invalid-feedback">{errors.subCategory}</div>}
                     </div>
                     <div className="col-12">
                       <label className="form-label fw-semibold">Skills I Want to Learn</label>

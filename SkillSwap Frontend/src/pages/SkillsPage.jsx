@@ -11,6 +11,7 @@ const API = "http://localhost:3000";
 const SkillsPage = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const currentUserId = user?.userId ?? user?._id;
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [category, setCategory] = useState("");
   const [mode, setMode] = useState("");
@@ -90,7 +91,7 @@ const SkillsPage = () => {
   let skills = [...allSkills];
 // hide logged in user 
 if(user){
-  skills = skills.filter((s) => s.userId !== user._id);
+  skills = skills.filter((s) => String(s.userId) !== String(currentUserId));
 }
 
   if (query) skills = skills.filter((s) => s.title.toLowerCase().includes(query.toLowerCase()) || s.description.toLowerCase().includes(query.toLowerCase()) || s.category.toLowerCase().includes(query.toLowerCase()));
@@ -120,11 +121,14 @@ if(user){
     setSending(true);
     try {
       // 1. Create swap record
+      const offeredSkillObj = mySkills.find((s) => String(s._id) === String(offeredSkillId));
       await axios.post(`${API}/swap`, {
         senderId: user.userId,
         receiverId: selectedSkill.userId,
         requestedSkillId: selectedSkill._id ?? selectedSkill.skillId,
+        requestedSkill: selectedSkill?.title ?? null,
         offeredSkillId: Number(offeredSkillId),
+        offeredSkill: offeredSkillObj?.title ?? null,
         message: swapMessage || "",
         scheduledDate: scheduledDate || null,
         status: "Pending",
@@ -266,8 +270,8 @@ if(user){
             ) : (
               <div className="row g-3">
                 {skills.map((skill) => (
-                  <div key={skill._id} className="col-sm-6 col-xl-4">
-                    <SkillCard skill={skill} onRequestSwap={user && skill.userId !== user._id ? handleRequestSwap : null} />
+                  <div key={skill.skillId ?? skill._id} className="col-sm-6 col-xl-4">
+                    <SkillCard skill={skill} onRequestSwap={user && String(skill.userId) !== String(currentUserId) ? handleRequestSwap : null} />
                   </div>
                 ))}
               </div>
@@ -275,8 +279,8 @@ if(user){
           ) : (
             <div className="row g-3">
               {filteredUsers.map((u) => (
-                <div key={u._id} className="col-sm-6 col-xl-4">
-                  <UserCard user={u} onSendRequest={user && u._id !== user._id ? () => toast.success(`Swap request sent to ${u.name}!`) : null} />
+                <div key={u.userId ?? u._id} className="col-sm-6 col-xl-4">
+                  <UserCard user={u} onSendRequest={user && (u.userId ?? u._id) !== currentUserId ? () => toast.success(`Swap request sent to ${u.name}!`) : null} />
                 </div>
               ))}
             </div>

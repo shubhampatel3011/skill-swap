@@ -8,12 +8,22 @@ const SwapRequestsPage = () => {
   const { user } = useAuth();
   const [swaps, setSwaps] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [allSkills, setAllSkills] = useState([]);
   const [filter, setFilter] = useState("all");
 
   const getUsers = async () => {
     try {
       const response = await axios.get("http://localhost:3000/users");
       setAllUsers(response.data.List);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getSkills = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/skills");
+      setAllSkills(response.data.List || []);
     } catch (error) {
       console.log(error);
     }
@@ -39,6 +49,7 @@ const SwapRequestsPage = () => {
     if (user) {
       getSwap();
       getUsers();
+      getSkills();
     }
   }, [user]);
 
@@ -217,7 +228,8 @@ const SwapRequestsPage = () => {
                 key={swapKey}
                 swap={swap}
                 currentUserId={user.userId}
-                allUsers={allUsers} 
+                allUsers={allUsers}
+                allSkills={allSkills}
                 onAccept={handleAccept}
                 onReject={handleReject}
                 onComplete={handleComplete}

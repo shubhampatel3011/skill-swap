@@ -12,14 +12,19 @@ const normalizeStatus = (status) => {
   return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
-const SwapRequestCard = ({ swap, currentUserId, allUsers = [], onAccept, onReject, onComplete }) => {
+const SwapRequestCard = ({ swap, currentUserId, allUsers = [], allSkills = [], onAccept, onReject, onComplete }) => {
+  // Build a lookup map from allSkills (by skillId)
+  const skillMap = Object.fromEntries(
+    allSkills.map((s) => [String(s.skillId ?? s._id), s.Title ?? s.title ?? ""])
+  );
+
   // Build a lookup map from the allUsers prop (already fetched by SwapRequestsPage)
   const userMap = Object.fromEntries(
     allUsers.map((u) => [String(u.userId ?? u.UserId), u])
   );
 
   // Handle both camelCase (MongoDB) and PascalCase (MySQL) field names
-  const swapId     = swap._id ?? swap.swapId ?? swap.SwapId;
+  const swapId     = swap.swapId ?? swap.SwapId;
   const senderId   = swap.senderId   ?? swap.SenderId;
   const receiverId = swap.receiverId ?? swap.ReceiverId;
   const isSender   = String(senderId) === String(currentUserId);
@@ -35,8 +40,13 @@ const SwapRequestCard = ({ swap, currentUserId, allUsers = [], onAccept, onRejec
     ?? (isSender ? (swap.receiverImage ?? swap.ReceiverImage) : (swap.senderImage ?? swap.SenderImage))
     ?? "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-  const offeredSkill   = swap.offeredSkill   ?? swap.OfferedSkill   ?? "-";
-  const requestedSkill = swap.requestedSkill ?? swap.RequestedSkill ?? "-";
+  const offeredSkillId   = String(swap.offeredSkillId   ?? swap.OfferedSkillId   ?? "");
+  const requestedSkillId = String(swap.requestedSkillId ?? swap.RequestedSkillId ?? "");
+
+  const offeredSkill   = swap.offeredSkill   ?? swap.OfferedSkill
+    ?? (offeredSkillId   ? skillMap[offeredSkillId]   : null) ?? "-";
+  const requestedSkill = swap.requestedSkill ?? swap.RequestedSkill
+    ?? (requestedSkillId ? skillMap[requestedSkillId] : null) ?? "-";
 
   const status = normalizeStatus(swap.status ?? swap.Status);
   const cfg = statusConfig[status] || statusConfig.Pending;
