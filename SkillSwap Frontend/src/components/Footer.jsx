@@ -27,6 +27,8 @@ const Footer = () => (
             <li><Link to="/skills" className="ss-footer-link">Browse Skills</Link></li>
             <li><Link to="/register" className="ss-footer-link">Join Community</Link></li>
             <li><Link to="/dashboard" className="ss-footer-link">Dashboard</Link></li>
+            <li><Link to="/chats" className="ss-footer-link">Chat</Link></li>
+            <li><Link to="/swaps" className="ss-footer-link">Swaps</Link></li>
           </ul>
         </div>
 

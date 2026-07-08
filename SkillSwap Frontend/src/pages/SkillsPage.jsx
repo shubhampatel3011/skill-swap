@@ -8,6 +8,12 @@ import axios from "axios";
 
 const API = "http://localhost:3000";
 
+const getLocalDateTimeMin = () => {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
+};
+
 const SkillsPage = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -89,10 +95,10 @@ const SkillsPage = () => {
 
 
   let skills = [...allSkills];
-// hide logged in user 
-if(user){
-  skills = skills.filter((s) => String(s.userId) !== String(currentUserId));
-}
+  // hide logged in user 
+  if (user) {
+    skills = skills.filter((s) => String(s.userId) !== String(user.userId));
+  }
 
   if (query) skills = skills.filter((s) => s.title.toLowerCase().includes(query.toLowerCase()) || s.description.toLowerCase().includes(query.toLowerCase()) || s.category.toLowerCase().includes(query.toLowerCase()));
   if (category) skills = skills.filter((s) => s.category === category);
@@ -299,7 +305,7 @@ if(user){
               <div className="modal-body">
                 <p className="text-muted mb-3">
                   Requesting: <strong>{selectedSkill.title}</strong> from{" "}
-                  <strong>{selectedSkill.userName || "this user"}</strong>
+                  <strong>{allUsers.find((u) => String(u.userId) === String(selectedSkill.userId))?.name || allUsers.find((u) => String(u.userId) === String(selectedSkill.userId))?.Name || "this user"}</strong>
                 </p>
                 <div className="mb-3">
                   <label className="form-label fw-semibold">What skill will you offer?</label>
@@ -327,12 +333,13 @@ if(user){
                   />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Preferred Timing</label>
+                  <label className="form-label fw-semibold">Start Date & Time</label>
                   <input
                     type="datetime-local"
                     className="form-control"
                     id="skillsPageSwapTiming"
                     value={scheduledDate}
+                    min={getLocalDateTimeMin()}
                     onChange={(e) => setScheduledDate(e.target.value)}
                   />
                 </div>

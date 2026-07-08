@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import StarRating from "./StarRating";
+import axios from "axios";
 
 const categoryColors = {
   Technology: "primary",
@@ -32,7 +33,7 @@ const SkillCard = ({ skill, onRequestSwap }) => {
         <h5 className="card-title fw-bold mb-1">{skill.title}</h5>
         <div className="d-flex align-items-center gap-2 mb-2">
           <img
-            src={skill.userImage}
+            src={skill.userName ? skill.userProfileImage : "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
             alt={skill.userName}
             className="rounded-circle"
             width={24}
