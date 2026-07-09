@@ -19,11 +19,17 @@ const modeIcon = { Online: "bi-wifi", Offline: "bi-geo-alt", Both: "bi-globe" };
 
 const SkillCard = ({ skill, onRequestSwap }) => {
   const color = categoryColors[skill.category] || "secondary";
-
+  const userName = skill.name || "Unknown user";
+  const userImage = skill.userProfileImage || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  
   return (
     <div className="card ss-skill-card h-100 border-0 shadow-sm">
-      <div className={`card-header ss-card-header bg-${color} bg-opacity-10 border-0 d-flex justify-content-between align-items-center`}>
-        <span className={`badge bg-${color} bg-opacity-75 fw-normal`}>{skill.category}</span>
+      <div
+        className={`card-header ss-card-header bg-${color} bg-opacity-10 border-0 d-flex justify-content-between align-items-center`}
+      >
+        <span className={`badge bg-${color} bg-opacity-75 fw-normal`}>
+          {skill.category}
+        </span>
         <span className="small text-muted">
           <i className={`bi ${modeIcon[skill.mode] || "bi-globe"} me-1`}></i>
           {skill.mode}
@@ -32,26 +38,29 @@ const SkillCard = ({ skill, onRequestSwap }) => {
       <div className="card-body d-flex flex-column">
         <h5 className="card-title fw-bold mb-1">{skill.title}</h5>
         <div className="d-flex align-items-center gap-2 mb-2">
-          <img
-            src={skill.userName ? skill.userProfileImage : "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
-            alt={skill.userName}
-            className="rounded-circle"
-            width={24}
-            height={24}
-          />
-          <Link to={`/users/${skill.userId}`} className="text-muted small ss-link">
-            {skill.userName}
+          <div className="ss-nav-avatar rounded-circle border-2 bg-dark bg-opacity-75 d-flex p-3 fs-5 align-items-center justify-content-center text-light fw-bold shadow">
+            {skill.name.charAt(0).toUpperCase()}
+          </div>
+          <Link
+            to={`/users/${skill.userId}`}
+            className="text-muted small ss-link"
+          >
+            {userName}
           </Link>
         </div>
         <p className="card-text text-muted small flex-grow-1">
-          {skill.description.length > 100 ? skill.description.slice(0, 100) + "…" : skill.description}
+          {skill.description.length > 100
+            ? skill.description.slice(0, 100) + "…"
+            : skill.description}
         </p>
         <div className="d-flex align-items-center justify-content-between mt-2">
           <div className="d-flex align-items-center gap-1">
             <StarRating value={skill.rating} />
             <span className="small text-muted ms-1">({skill.reviewCount})</span>
           </div>
-          <span className={`badge bg-${skill.experienceLevel === "Advanced" ? "danger" : skill.experienceLevel === "Intermediate" ? "warning" : "success"} bg-opacity-75`}>
+          <span
+            className={`badge bg-${skill.experienceLevel === "Advanced" ? "danger" : skill.experienceLevel === "Intermediate" ? "warning" : "success"} bg-opacity-75`}
+          >
             {skill.experienceLevel}
           </span>
         </div>
@@ -69,7 +78,10 @@ const SkillCard = ({ skill, onRequestSwap }) => {
             <i className="bi bi-send me-1"></i>Request Swap
           </button>
         ) : (
-          <Link to={`/users/${skill.userId}`} className="btn ss-btn-outline-primary w-100 btn-sm">
+          <Link
+            to={`/users/${skill.userId}`}
+            className="btn ss-btn-outline-primary w-100 btn-sm"
+          >
             <i className="bi bi-person me-1"></i>View Profile
           </Link>
         )}
