@@ -33,7 +33,7 @@ const UserProfilePage = () => {
         const [usersRes, skillsRes, reviewsRes] = await Promise.all([
           axios.get(`${API}/users`),
           axios.get(`${API}/skills/user/${id}`),
-          axios.get(`${API}/review`).catch(() => ({ data: { List: [] } })),
+          axios.get(`${API}/feedback`).catch(() => ({ data: { List: [] } })),
         ]);
 
         const allUsers = usersRes.data.List || [];

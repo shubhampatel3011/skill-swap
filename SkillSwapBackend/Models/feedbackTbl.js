@@ -1,7 +1,7 @@
 var MyConnection = require("../DBConnector/DBConnection");
 
-class reviewTbl {
-  async AddReview(Model) {
+class feedbackTbl {
+  async AddFeedback(Model) {
     const db = await MyConnection();
 
     const [result] = await db.execute(
@@ -21,7 +21,7 @@ class reviewTbl {
     return result;
   }
 
-  async GetUserReviews(userId) {
+  async GetUserFeedbacks(userId) {
     const db = await MyConnection();
 
     const [result] = await db.execute(
@@ -34,7 +34,7 @@ class reviewTbl {
     return result;
   }
 
-  async GetReviewsByReviewer(userId) {
+  async GetFeedbackByReviewer(userId) {
     const db = await MyConnection();
 
     const [result] = await db.execute(
@@ -47,7 +47,7 @@ class reviewTbl {
     return result;
   }
 
-  async GetAllReviews() {
+  async GetAllFeedback() {
     const db = await MyConnection();
 
     const [result] = await db.execute(`SELECT * FROM reviewTbl`);
@@ -56,7 +56,7 @@ class reviewTbl {
     return result;
   }
 
-  async DeleteReview(id) {
+  async DeleteFeedback(id) {
     const db = await MyConnection();
 
     const [result] = await db.execute(
@@ -69,4 +69,4 @@ class reviewTbl {
   }
 }
 
-module.exports = reviewTbl;
+module.exports = feedbackTbl;

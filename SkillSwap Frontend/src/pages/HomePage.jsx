@@ -53,12 +53,15 @@ const HomePage = () => {
 
         if (!mounted) return;
 
+        const userList = Array.isArray(uRes?.data?.List) ? uRes.data.List : [];
+
         if (sRes?.data?.List && Array.isArray(sRes.data.List) && sRes.data.List.length > 0) {
           // Normalize skill objects to match mockData shape when possible
           const normalizedSkills = sRes.data.List.map((sk) => ({
             _id: sk._id || sk.id || sk.SkillId || sk.SkillID,
             userId: sk.UserId || sk.userId || sk.userID || sk.user_id,
-            userName: sk.UserName || sk.userName || sk.user || sk.name || "",
+            name: sk.Name || sk.name || userList.find((u) => String((u._id || u.id || u.UserId || u.UserID)) === String(sk.UserId || sk.userId || sk.userID || sk.user_id))?.Name || userList.find((u) => String((u._id || u.id || u.UserId || u.UserID)) === String(sk.UserId || sk.userId || sk.userID || sk.user_id))?.name || "",
+            userName: sk.UserName || sk.userName || sk.Name || sk.name || sk.user || "",
             userImage: sk.UserImage || sk.userImage || sk.profileImage || "",
             title: sk.Title || sk.title || "",
             category: sk.Category || sk.category || "",
@@ -73,8 +76,8 @@ const HomePage = () => {
           setSkills(normalizedSkills);
         }
 
-        if (uRes?.data?.List && Array.isArray(uRes.data.List) && uRes.data.List.length > 0) {
-          const normalizedUsers = uRes.data.List.map((u) => ({
+        if (userList.length > 0) {
+          const normalizedUsers = userList.map((u) => ({
             _id: u._id || u.id || u.UserId || u.UserID,
             name: u.Name || u.name || "",
             email: u.Email || u.email || "",  
