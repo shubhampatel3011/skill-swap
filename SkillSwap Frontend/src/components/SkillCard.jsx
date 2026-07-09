@@ -39,7 +39,7 @@ const SkillCard = ({ skill, onRequestSwap }) => {
         <h5 className="card-title fw-bold mb-1">{skill.title}</h5>
         <div className="d-flex align-items-center gap-2 mb-2">
           <div className="ss-nav-avatar rounded-circle border-2 bg-dark bg-opacity-75 d-flex p-3 fs-5 align-items-center justify-content-center text-light fw-bold shadow">
-            {skill.name.charAt(0).toUpperCase()}
+            {userName.charAt(0).toUpperCase()}
           </div>
           <Link
             to={`/users/${skill.userId}`}

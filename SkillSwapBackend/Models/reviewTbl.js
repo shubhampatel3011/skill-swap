@@ -34,6 +34,28 @@ class reviewTbl {
     return result;
   }
 
+  async GetReviewsByReviewer(userId) {
+    const db = await MyConnection();
+
+    const [result] = await db.execute(
+      `SELECT * FROM reviewTbl
+      WHERE ReviewerId=?`,
+      [userId],
+    );
+
+    db.end();
+    return result;
+  }
+
+  async GetAllReviews() {
+    const db = await MyConnection();
+
+    const [result] = await db.execute(`SELECT * FROM reviewTbl`);
+
+    db.end();
+    return result;
+  }
+
   async DeleteReview(id) {
     const db = await MyConnection();
 

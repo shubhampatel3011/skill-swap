@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { MOCK_SKILLS, MOCK_USERS } from "../data/mockData";
 import SkillCard from "../components/SkillCard";
 import StarRating from "../components/StarRating";
+import axios from "axios";
 
 const features = [
   { icon: "bi-arrow-left-right", title: "Skill Exchange", desc: "Trade your skills directly with others. No money involved." },
@@ -25,9 +25,12 @@ const faqs = [
 const HomePage = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [skills, setSkills] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const featuredSkills = MOCK_SKILLS.slice(0, 6);
-  const topUsers = MOCK_USERS.filter((u) => u.role === "user").slice(0, 4);
+  const featuredSkills = skills.slice(0, 6);
+  const topUsers = users.filter((u) => u.role === "user").slice(0, 4);
 
   const handleGetStarted = () => {
     navigate(user ? "/skills" : "/register");
@@ -37,6 +40,68 @@ const HomePage = () => {
     e.preventDefault();
     navigate(`/skills?q=${encodeURIComponent(searchQuery)}`);
   };
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [sRes, uRes] = await Promise.all([
+          axios.get("http://localhost:3000/skills"),
+          axios.get("http://localhost:3000/users"),
+        ]);
+
+        if (!mounted) return;
+
+        if (sRes?.data?.List && Array.isArray(sRes.data.List) && sRes.data.List.length > 0) {
+          // Normalize skill objects to match mockData shape when possible
+          const normalizedSkills = sRes.data.List.map((sk) => ({
+            _id: sk._id || sk.id || sk.SkillId || sk.SkillID,
+            userId: sk.UserId || sk.userId || sk.userID || sk.user_id,
+            userName: sk.UserName || sk.userName || sk.user || sk.name || "",
+            userImage: sk.UserImage || sk.userImage || sk.profileImage || "",
+            title: sk.Title || sk.title || "",
+            category: sk.Category || sk.category || "",
+            description: sk.Description || sk.description || "",
+            experienceLevel: sk.ExperienceLevel || sk.experienceLevel || "",
+            availability: sk.Availability || sk.availability || "",
+            mode: sk.Mode || sk.mode || "",
+            rating: typeof sk.Rating !== 'undefined' ? sk.Rating : (sk.rating || 0),
+            reviewCount: sk.ReviewCount || sk.reviewCount || 0,
+            createdAt: sk.CreatedAt || sk.createdAt || new Date().toISOString(),
+          }));
+          setSkills(normalizedSkills);
+        }
+
+        if (uRes?.data?.List && Array.isArray(uRes.data.List) && uRes.data.List.length > 0) {
+          const normalizedUsers = uRes.data.List.map((u) => ({
+            _id: u._id || u.id || u.UserId || u.UserID,
+            name: u.Name || u.name || "",
+            email: u.Email || u.email || "",  
+            phone: u.Mobile || u.mobile || u.phone || "",
+            location: u.Address || u.address || u.location || "",
+            bio: u.Bio || u.bio || "",
+            profileImage: u.ProfileImage || u.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.Name || u.name || "User")}&background=0d9488&color=fff&size=128`,
+            role: u.Role || u.role || "user",
+            rating: typeof u.Rating !== 'undefined' ? u.Rating : (u.rating || 5),
+            reviewCount: u.ReviewCount || u.reviewCount || 0,
+          }));
+          setUsers(normalizedUsers);
+        }
+      } catch (err) {
+        console.error("Failed to fetch skills/users:", err);
+        // keep mock data as fallback
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <>
@@ -81,13 +146,15 @@ const HomePage = () => {
             <div className="col-lg-6 d-none d-lg-flex justify-content-center">
               <div className="ss-hero-cards-grid">
                 {featuredSkills.slice(0, 4).map((skill, i) => (
-                  <div key={skill._id} className={`ss-hero-mini-card ss-card-anim-${i} d-flex flex-column justify-content-between gap-2 h-100`}>
+                  <div key={skill.userId} className={`ss-hero-mini-card ss-card-anim-${i} d-flex flex-column justify-content-between gap-2 h-100`}>
                     <div className="d-flex align-items-center gap-2">
-                      <img src={skill.userImage} width={28} height={28} className="rounded-circle flex-shrink-0" alt={skill.userName} />
+                      <div className="ss-nav-avatar rounded-circle border-2 bg-dark bg-opacity-75 d-flex p-3 fs-5 align-items-center justify-content-center text-light fw-bold shadow">
+                        {skill.userName.charAt(0).toUpperCase()}
+                      </div>
                       <span className="small fw-semibold text-truncate" title={skill.title}>{skill.title}</span>
                     </div>
                     <div className="d-flex align-items-center justify-content-between mt-auto">
-                      <span className="badge bg-primary bg-opacity-15 small text-truncate" style={{ maxWidth: "130px" }} title={skill.category}>{skill.category}</span>
+                      <span className="badge bg-primary bg-opacity-15 small text-truncate" style={{ maxWidth: "150px" }} title={skill.category}>{skill.category}</span>
                       <StarRating value={skill.rating} size="xs" />
                     </div>
                   </div>
@@ -158,7 +225,7 @@ const HomePage = () => {
           </div>
           <div className="row g-4">
             {featuredSkills.map((skill) => (
-              <div key={skill._id} className="col-sm-6 col-lg-4">
+              <div key={skill.userId} className="col-sm-6 col-lg-4">
                 <SkillCard skill={skill} />
               </div>
             ))}
