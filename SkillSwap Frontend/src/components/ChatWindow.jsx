@@ -6,8 +6,13 @@ const ChatWindow = ({ messages, onSend, partnerName, partnerImage, currentUserId
   const myId = currentUserId ?? user?.userId ?? user?._id;
   const [text, setText] = useState("");
   const bottomRef = useRef(null);
+  const isFirstLoad = useRef(true);
 
   useEffect(() => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 

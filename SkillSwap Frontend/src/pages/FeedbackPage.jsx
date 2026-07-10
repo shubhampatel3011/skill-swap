@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { MOCK_FEEDBACK } from "../data/mockData";
 import { toast } from "react-toastify";
+import axios from "axios";
+
+const API = "http://localhost:3000";
 
 const FeedbackPage = () => {
   const { user } = useAuth();
@@ -64,7 +67,7 @@ const FeedbackPage = () => {
     return e;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const v = validate();
     if (Object.keys(v).length > 0) {
@@ -75,48 +78,56 @@ const FeedbackPage = () => {
     setLoading(true);
     setErrors({});
 
-    // Simulate submission
-    setTimeout(() => {
-      try {
-        const saved = localStorage.getItem("website_feedback");
-        const feedList = saved ? JSON.parse(saved) : MOCK_FEEDBACK;
+    const newFeedback = {
+      _id: "feed_" + Date.now(),
+      userName: isAnonymous ? "Anonymous" : name.trim(),
+      userEmail: isAnonymous ? "" : email.trim(),
+      rating,
+      category,
+      comment: comment.trim(),
+      status: "New",
+      adminNotes: "",
+      createdAt: new Date().toISOString(),
+    };
 
-        const newFeedback = {
-          _id: "feed_" + Date.now(),
-          userName: isAnonymous ? "Anonymous" : name.trim(),
-          userEmail: isAnonymous ? "" : email.trim(),
-          rating,
-          category,
-          comment: comment.trim(),
-          status: "New",
-          adminNotes: "",
-          createdAt: new Date().toISOString()
-        };
+    try {
+      await axios.post(`${API}/review`, {
+        reviewerId: user?.userId || null,
+        reviewedUserId: null,
+        swapId: null,
+        rating,
+        comment: comment.trim(),
+        category,
+        userName: newFeedback.userName,
+        userEmail: newFeedback.userEmail,
+        isAnonymous,
+      });
 
-        const updated = [newFeedback, ...feedList];
-        localStorage.setItem("website_feedback", JSON.stringify(updated));
+      const saved = localStorage.getItem("website_feedback");
+      const feedList = saved ? JSON.parse(saved) : MOCK_FEEDBACK;
+      const updated = [newFeedback, ...feedList];
+      localStorage.setItem("website_feedback", JSON.stringify(updated));
 
-        toast.success("Thank you! Your feedback has been submitted successfully. 🎉");
-        
-        // Reset form
-        setRating(0);
-        setCategory("");
-        setComment("");
-        setIsAnonymous(false);
-        if (!user) {
-          setName("");
-          setEmail("");
-        }
+      toast.success("Thank you! Your feedback has been submitted successfully. 🎉");
 
-        // Navigate back or home
-        navigate(-1);
-      } catch (err) {
-        toast.error("An error occurred while saving feedback.");
-        console.error(err);
-      } finally {
-        setLoading(false);
+      // Reset form
+      setRating(0);
+      setCategory("");
+      setComment("");
+      setIsAnonymous(false);
+      if (!user) {
+        setName("");
+        setEmail("");
       }
-    }, 600);
+
+      // Navigate back or home
+      navigate(-1);
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred while saving feedback.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

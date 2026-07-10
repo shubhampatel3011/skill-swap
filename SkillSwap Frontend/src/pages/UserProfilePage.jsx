@@ -8,6 +8,31 @@ import axios from "axios";
 
 const API = "http://localhost:3000";
 
+const getLocalDateTimeMin = () => {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
+};
+
+const normalizeUser = (rawUser) => {
+  if (!rawUser) return null;
+
+  const name = rawUser.name || rawUser.Name || "User";
+  const profileImage =
+    rawUser.profileImage ||
+    rawUser.ProfileImage ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0d9488&color=fff&size=128`;
+
+  return {
+    ...rawUser,
+    _id: rawUser._id ?? rawUser.userId ?? rawUser.UserId ?? rawUser.id,
+    userId: rawUser.userId ?? rawUser.UserId ?? rawUser._id ?? rawUser.id,
+    name,
+    profileImage,
+    ProfileImage: profileImage,
+  };
+};
+
 const UserProfilePage = () => {
   const { id } = useParams();      // id = the profile user's userId
   const { user } = useAuth();
@@ -40,7 +65,7 @@ const UserProfilePage = () => {
         const found = allUsers.find(
           (u) => String(u.userId || u._id) === String(id)
         );
-        setProfileUser(found || null);
+        setProfileUser(normalizeUser(found));
 
         const rawSkills = skillsRes.data.List || [];
         setSkills(rawSkills.map(normalizeSkill));
@@ -111,7 +136,7 @@ const UserProfilePage = () => {
     setSelectedSkill(skill);
     setOfferedSkillId("");
     setMessage("");
-    setScheduledDate("");
+    setScheduledDate(getLocalDateTimeMin());
     fetchMySkills();
     setShowModal(true);
   };
@@ -163,8 +188,13 @@ const UserProfilePage = () => {
         <div className="row align-items-center g-4">
           <div className="col-auto">
             <div className="position-relative">
-              <img src={profileUser.profileImage} alt={profileUser.name}
-                className="rounded-circle border border-3 border-white shadow" width={100} height={100} />
+              <img
+                src={profileUser.profileImage || profileUser.ProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUser.name || "User")}&background=0d9488&color=fff&size=118`}
+                alt={profileUser.name}
+                className="rounded-circle border border-3 border-white shadow"
+                width={100}
+                height={100}
+              />
               {profileUser.rating >= 4.8 && (
                 <span className="position-absolute bottom-0 end-0 badge rounded-pill bg-warning text-dark" style={{ fontSize: "10px" }}>
                   <i className="bi bi-patch-check-fill"></i> Top
@@ -174,7 +204,7 @@ const UserProfilePage = () => {
           </div>
           <div className="col">
             <h3 className="fw-bold mb-1">{profileUser.name}</h3>
-            <p className="text-muted mb-1"><i className="bi bi-geo-alt me-1"></i>{profileUser.location}</p>
+            <p className="text-muted mb-1"><i className="bi bi-geo-alt me-1"></i>{profileUser.address}</p>
             <div className="d-flex align-items-center gap-2 mb-2">
               <StarRating value={profileUser.rating} />
               <span className="fw-bold">{profileUser.rating}</span>
@@ -266,7 +296,7 @@ const UserProfilePage = () => {
                 <div className="mb-3">
                   <label className="form-label fw-semibold">Preferred Timing</label>
                   <input type="datetime-local" className="form-control" id="swapTiming"
-                    value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+                    value={scheduledDate} min={getLocalDateTimeMin()} onChange={(e) => setScheduledDate(e.target.value)} />
                 </div>
               </div>
               <div className="modal-footer border-0">

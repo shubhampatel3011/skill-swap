@@ -74,10 +74,10 @@ const ChatPage = () => {
   }, [fetchSwap, fetchMessages, user]);
 
   // Poll for new messages every 5 seconds while the page is open
-  useEffect(() => {
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
-  }, [fetchMessages]);
+  // useEffect(() => {
+  //   const interval = setInterval(fetchMessages, 5000);
+  //   return () => clearInterval(interval);
+  // }, [fetchMessages]);
 
   // Throttle: only send a notification once per 60 s per conversation
   const lastNotifiedRef = useRef(0);

@@ -117,7 +117,7 @@ const SkillsPage = () => {
     setSelectedSkill(skill);
     setOfferedSkillId("");
     setSwapMessage("");
-    setScheduledDate("");
+    setScheduledDate(getLocalDateTimeMin());
     fetchMySkills();
     setShowModal(true);
   };
