@@ -1,9 +1,10 @@
 var express = require("express");
 var router = express.Router();
 const swapTbl = require("../Models/swapTbl");
+const verifyToken = require("../middleware/authMiddleware");
 
 // Get All Requests
-router.get("/", async (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
   try {
     const db = new swapTbl();
     const result = await db.GetList();
@@ -18,7 +19,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get Request By Id
-router.get("/:id", async (req, res) => {
+router.get("/:id", verifyToken, async (req, res) => {
   try {
     const db = new swapTbl();
     const result = await db.GetById(req.params.id);
@@ -33,7 +34,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Add Request
-router.post("/", async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   try {
     const db = new swapTbl();
     await db.AddRequest(req.body);
@@ -47,7 +48,7 @@ router.post("/", async (req, res) => {
 });
 
 // Update Status
-router.put("/:id/status", async (req, res) => {
+router.put("/:id/status", verifyToken, async (req, res) => {
   try {
     const db = new swapTbl();
 
@@ -67,7 +68,7 @@ router.put("/:id/status", async (req, res) => {
 });
 
 // Delete Request
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const db = new swapTbl();
 

@@ -189,7 +189,7 @@ const ChatPage = () => {
                 </div>
               </div>
               <div className="d-flex gap-2">
-                <span className="badge bg-success bg-opacity-15 text-success border border-success px-2 py-1">
+                <span className="badge bg-success bg-opacity-15 text-light border border-success px-2 py-2">
                   <i className="bi bi-check-circle me-1"></i>
                   {swap.status ?? swap.Status}
                 </span>
@@ -218,7 +218,7 @@ const ChatPage = () => {
             <div className="alert alert-info d-flex align-items-center gap-2 mt-3 mb-0">
               <i className="bi bi-calendar-event fs-5"></i>
               <div>
-                <strong>Session Scheduled:</strong>{" "}
+                <strong>Swap Session Started:</strong>{" "}
                 {new Date(swap.scheduledDate ?? swap.ScheduledDate).toLocaleString("en-IN", {
                   weekday: "long", day: "numeric", month: "long",
                   year: "numeric", hour: "2-digit", minute: "2-digit",

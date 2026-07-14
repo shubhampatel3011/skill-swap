@@ -1,9 +1,12 @@
 var express = require("express");
 var router = express.Router();
+const jwt = require("jsonwebtoken");
+const generateToken = require("../utils/jwt");
 const userTbl = require("../Models/userTbl");
+const verifyToken = require("../middleware/authMiddleware");
 
 /* GET users listing. */
-router.get("/", async (req, res, next) => {
+router.get("/", verifyToken, async (req, res, next) => {
   try {
     const db = new userTbl();
     const result = await db.GetList();
@@ -19,7 +22,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", verifyToken, async (req, res, next) => {
   try {
     var id = req.params.id;
     const db = new userTbl();
@@ -36,7 +39,7 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", verifyToken, async (req, res, next) => {
   try {
     const db = new userTbl();
 
@@ -65,30 +68,31 @@ router.post("/login", async (req, res) => {
   try {
     const { Email, Password } = req.body;
 
-    const db = new userTbl();
+    const user = await UserModel.Login(Email, Password);
 
-    const result = await db.LoginUser(Email, Password);
-
-    if (result.length > 0) {
-      res.status(200).json({
-        Message: "Login successful",
-        User: result[0],
-      });
-    } else {
-      res.status(401).json({
-        error: "Invalid email or password",
+    if (!user) {
+      return res.status(401).json({
+        Message: "Invalid Email Or Password",
       });
     }
-  } catch (e) {
-    console.log(e);
+
+    const token = generateToken(user);
+
+    res.json({
+      Success: true,
+      User: user,
+      Token: token,
+    });
+  } catch (error) {
+    console.log(error);
 
     res.status(500).json({
-      error: e.message,
+      Message: "Server Error",
     });
   }
 });
 
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", verifyToken, async (req, res, next) => {
   try {
     var id = req.params.id;
     const db = new userTbl();
@@ -105,7 +109,7 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", verifyToken, async (req, res, next) => {
   try {
     var id = req.params.id;
     const db = new userTbl();
@@ -121,7 +125,7 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
-router.put("/block/:id", async (req, res) => {
+router.put("/block/:id", verifyToken, async (req, res) => {
   try {
     const db = new userTbl();
 

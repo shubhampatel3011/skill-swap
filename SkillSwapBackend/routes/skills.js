@@ -1,9 +1,10 @@
 var express = require("express");
 var router = express.Router();
 const skillTbl = require("../Models/skillTbl");
+const verifyToken = require("../middleware/authMiddleware");
 
 // GET skills listing. 
-router.get("/", async (req, res, next) => {
+router.get("/", verifyToken, async (req, res, next) => {
   try {
     const db = new skillTbl();
     const result = await db.GetList();
@@ -20,7 +21,7 @@ router.get("/", async (req, res, next) => {
 });
 
 // GET skills by userId — must be before /:id to avoid collision
-router.get("/user/:userId", async (req, res, next) => {
+router.get("/user/:userId", verifyToken, async (req, res, next) => {
   try {
     const db = new skillTbl();
     const result = await db.GetByUserId(req.params.userId);
@@ -34,7 +35,7 @@ router.get("/user/:userId", async (req, res, next) => {
   }
 });
 
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", verifyToken, async (req, res, next) => {
   try {
     var id = req.params.id;
     const db = new skillTbl();
@@ -53,7 +54,7 @@ router.get("/:id", async (req, res, next) => {
 
 // Add skills
 
-router.post("/", async (req, res, next) => {
+router.post("/", verifyToken, async (req, res, next) => {
   try {
     const db = new skillTbl();
     await db.AddSkill(req.body);
@@ -70,7 +71,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", verifyToken, async (req, res, next) => {
   try {
     var id = req.params.id;
     const db = new skillTbl();
@@ -87,7 +88,7 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", verifyToken, async (req, res, next) => {
   try {
     var id = req.params.id;
     const db = new skillTbl();

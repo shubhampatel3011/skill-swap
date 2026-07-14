@@ -15,6 +15,7 @@ const notificationRouter = require("./routes/notification");
 const categoryRouter = require('./routes/category');
 const subCategoryRouter = require('./routes/subCategory');
 const thirdCategoryRouter = require('./routes/thirdCategory');
+require("dotenv").config();
 
 var app = express();
 
