@@ -5,17 +5,22 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 const DashboardPage = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [mySwap, setMySwap] = useState([]);
   const [mySkill, setMySkill] = useState([]);
   const [allSkills, setAllSkills] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [notification, setNotification] = useState([]);
+  const sessionToken = token || localStorage.getItem("ss_token");
+
+  const authConfig = sessionToken
+    ? { headers: { Authorization: `Bearer ${sessionToken}` } }
+    : undefined;
 
 
   const getSkill = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/skills");
+      const response = await axios.get("http://localhost:3000/skills", authConfig);
       const allSkillsList = response.data.List;
       setAllSkills(allSkillsList);
       setMySkill(allSkillsList.filter((skill) => skill.userId === user.userId));
@@ -26,7 +31,7 @@ const DashboardPage = () => {
 
   const getUsers = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/users");
+      const response = await axios.get("http://localhost:3000/users", authConfig);
       setAllUsers(response.data.List);
     } catch (error) {
       console.log(error);
@@ -37,7 +42,8 @@ const DashboardPage = () => {
     try {
 
       const response = await axios.get(
-        "http://localhost:3000/swap"
+        "http://localhost:3000/swap",
+        authConfig
       );
 
       const swap = response.data.List.filter(
@@ -57,7 +63,8 @@ const DashboardPage = () => {
     try {
 
       const response = await axios.get(
-        `http://localhost:3000/notification/${user.userId}`
+        `http://localhost:3000/notification/${user.userId}`,
+        authConfig
       );
 
       setNotification(response.data.List);
@@ -85,13 +92,13 @@ const DashboardPage = () => {
 
 
   useEffect(() => {
-    if (user) {
+    if (user && sessionToken) {
       getSkill();
       getUsers();
       getSwap();
       getNotification();
     }
-  }, [user]);
+  }, [user, sessionToken]);
 
   // Lookup maps — handle both camelCase (userId) and PascalCase (UserId) from MySQL
   const skillMap = Object.fromEntries(allSkills.map((s) => [s.skillId ?? s.SkillId, s.title ?? s.Title]));

@@ -17,6 +17,7 @@ const getLocalDateTimeMin = () => {
 const SkillsPage = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { token } = useAuth();
   const currentUserId = user?.userId ?? user?._id;
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [category, setCategory] = useState("");
@@ -58,7 +59,10 @@ const SkillsPage = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API}/users`);
+      const authToken = token || localStorage.getItem("ss_token");
+      const response = await axios.get(`${API}/users`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setAllUsers(response.data.List || response.data || []);
     } catch (error) {
       console.log(error);
@@ -68,7 +72,10 @@ const SkillsPage = () => {
   const fetchSkills = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API}/skills`);
+      const authToken = token || localStorage.getItem("ss_token");
+      const response = await axios.get(`${API}/skills`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setAllSkills(response.data.List || response.data || []);
     } catch (error) {
       console.log(error);
@@ -80,7 +87,10 @@ const SkillsPage = () => {
   const fetchMySkills = async () => {
     if (!user) return;
     try {
-      const res = await axios.get(`${API}/skills/user/${user.userId}`);
+      const authToken = token || localStorage.getItem("ss_token");
+      const res = await axios.get(`${API}/skills/user/${user.userId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setMySkills(
         (res.data.List || []).map((s) => ({
           ...s,

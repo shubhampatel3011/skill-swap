@@ -13,7 +13,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg sticky-top ss-navbar shadow-sm">
+    <nav className="navbar navbar-expand-md sticky-top ss-navbar shadow-sm">
       <div className="container">
         {/* Brand */}
         <Link className="navbar-brand d-flex align-items-center gap-2" to="/">

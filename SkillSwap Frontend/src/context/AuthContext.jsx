@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { MOCK_USERS } from "../data/mockData";
+import { ADMIN_CREDENTIALS } from "../data/mockData";
 import axios from "axios";
 
 const AuthContext = createContext(null);
@@ -52,6 +52,7 @@ const normalizeUser = (rawUser) => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);      // client session
   const [admin, setAdmin] = useState(null);    // admin session (independent)
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,9 +61,14 @@ export const AuthProvider = ({ children }) => {
       if (storedUser && storedUser !== "undefined") {
         setUser(normalizeUser(JSON.parse(storedUser)));
       }
+      const storedToken = localStorage.getItem("ss_token");
+      if (storedToken && storedToken !== "undefined") {
+        setToken(storedToken);
+      }
     } catch (err) {
       console.error("Failed to parse user from localStorage:", err);
       localStorage.removeItem("ss_user");
+      localStorage.removeItem("ss_token");
     }
     try {
       const storedAdmin = localStorage.getItem("ss_admin");
@@ -76,12 +82,31 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (emailOrUser, password) => {
+  useEffect(() => {
+    const interceptorId = axios.interceptors.request.use((config) => {
+      const storedToken = token || localStorage.getItem("ss_token");
+      if (storedToken) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${storedToken}`;
+      }
+      return config;
+    });
+
+    return () => {
+      axios.interceptors.request.eject(interceptorId);
+    };
+  }, [token]);
+
+  const login = (emailOrUser, tokenOrPassword) => {
     // Handle user object from backend
     if (typeof emailOrUser === "object" && emailOrUser !== null) {
       const userData = normalizeUser(emailOrUser);
       setUser(userData);
       localStorage.setItem("ss_user", JSON.stringify(userData));
+      if (typeof tokenOrPassword === "string" && tokenOrPassword) {
+        setToken(tokenOrPassword);
+        localStorage.setItem("ss_token", tokenOrPassword);
+      }
       return userData;
     }
 
@@ -100,16 +125,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const adminLogin = (email, password) => {
-    const found = MOCK_USERS.find(
-      (u) => u.email === email && password === "admin123" && u.role === "admin",
+    const found = ADMIN_CREDENTIALS.find(
+      (a) => a.email === email && a.password === password
     );
 
     if (!found) throw new Error("Invalid email or password.");
 
-    const normalizedFound = normalizeUser(found);
-    setAdmin(normalizedFound);                                    // sets admin only
-    localStorage.setItem("ss_admin", JSON.stringify(normalizedFound)); // separate key
-    return normalizedFound;
+    const normalizedAdmin = normalizeUser(found);
+    setAdmin(normalizedAdmin);
+    localStorage.setItem("ss_admin", JSON.stringify(normalizedAdmin));
+    return normalizedAdmin;
   };
 
   const register = (data) => {
@@ -135,7 +160,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem("ss_user");
+    localStorage.removeItem("ss_token");
   };
 
   const adminLogout = () => {
@@ -164,7 +191,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, admin, loading, login, adminLogin, logout, adminLogout, register, updateProfile }}>
+    <AuthContext.Provider value={{ user, admin, token, loading, login, adminLogin, logout, adminLogout, register, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,5 @@
 var MyConnection = require("../DBConnector/DBConnection");
+const bcrypt = require("bcrypt");
 
 class userTbl {
   //  insert data
@@ -30,18 +31,36 @@ class userTbl {
 
   // login user
 
-  async LoginUser(Email, Password) {
+  async LoginUser(email, password) {
     const db = await MyConnection();
-    const [result] = await db.execute(
-      `SELECT * FROM usertbl
-     WHERE email = ? AND password = ?`,
 
-      [Email, Password],
-    );
+    const [rows] = await db.execute("SELECT * FROM usertbl WHERE email=?", [
+      email,
+    ]);
 
     db.end();
 
-    return result;
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const user = rows[0];
+
+    // Handle both PascalCase 'Password' (DB column) and lowercase 'password'
+    const hashedPassword = user.Password || user.password;
+
+    // Guard: if no hashed password stored, treat as invalid credentials
+    if (!hashedPassword) {
+      return null;
+    }
+
+    const match = await bcrypt.compare(password, hashedPassword);
+
+    if (!match) {
+      return null;
+    }
+
+    return user;
   }
 
   //  get data
@@ -75,7 +94,7 @@ class userTbl {
   // delete data by id
   async DeleteUserById(id) {
     const db = await MyConnection();
-    const [result] = await db.execute("Delete * from usertbl Where userId=?", [
+    const [result] = await db.execute("Delete from usertbl Where userId=?", [
       id,
     ]);
     db.end();

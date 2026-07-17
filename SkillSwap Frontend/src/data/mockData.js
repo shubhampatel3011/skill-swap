@@ -1,3 +1,14 @@
+// ─── ADMIN CREDENTIALS (local only, no backend) ─────────────────────────────
+export const ADMIN_CREDENTIALS = [
+  {
+    _id: "admin_1",
+    name: "Admin",
+    email: "admin@skillswap.com",
+    password: "admin123",
+    role: "admin",
+  },
+];
+
 // ─── USERS ───────────────────────────────────────────────────────────────────
 export const MOCK_USERS = [
   {
@@ -380,6 +391,16 @@ export const MOCK_SUBCATEGORIES = [
   { _id: "sub8", categoryId: "cat4", name: "European Languages", description: "Spanish, French, German, and Italian instruction.", status: "Active", createdAt: "2024-01-18T10:00:00Z" },
   { _id: "sub9", categoryId: "cat4", name: "Asian Languages", description: "Japanese, Mandarin, Hindi, and Korean instruction.", status: "Active", createdAt: "2024-01-18T11:00:00Z" },
   { _id: "sub10", categoryId: "cat5", name: "Yoga & Mindfulness", description: "Yoga postures, breathing exercises, and meditation.", status: "Active", createdAt: "2024-01-19T10:00:00Z" },
+  { _id: "sub11", categoryId: "cat6", name: "Entrepreneurship", description: "Startup planning, business models, pitching, and small business growth.", status: "Active", createdAt: "2024-01-20T10:00:00Z" },
+  { _id: "sub12", categoryId: "cat6", name: "Digital Marketing", description: "SEO, paid ads, email campaigns, and social media growth.", status: "Active", createdAt: "2024-01-20T11:00:00Z" },
+  { _id: "sub13", categoryId: "cat7", name: "Mathematics Tutoring", description: "Algebra, geometry, calculus, and problem-solving practice.", status: "Active", createdAt: "2024-01-21T10:00:00Z" },
+  { _id: "sub14", categoryId: "cat7", name: "Science Tutoring", description: "Physics, chemistry, and biology concepts explained simply.", status: "Active", createdAt: "2024-01-21T11:00:00Z" },
+  { _id: "sub15", categoryId: "cat8", name: "Baking", description: "Bread, cakes, pastries, and dessert baking fundamentals.", status: "Active", createdAt: "2024-01-22T10:00:00Z" },
+  { _id: "sub16", categoryId: "cat8", name: "International Cuisine", description: "Traditional recipes, meal planning, and cooking techniques from around the world.", status: "Active", createdAt: "2024-01-22T11:00:00Z" },
+  { _id: "sub17", categoryId: "cat9", name: "Team Sports", description: "Football, basketball, cricket, and coordination drills.", status: "Active", createdAt: "2024-01-23T10:00:00Z" },
+  { _id: "sub18", categoryId: "cat9", name: "Strength & Conditioning", description: "Training plans, mobility, endurance, and recovery routines.", status: "Active", createdAt: "2024-01-23T11:00:00Z" },
+  { _id: "sub19", categoryId: "cat10", name: "Public Speaking", description: "Presentation skills, confidence building, and storytelling.", status: "Active", createdAt: "2024-01-24T10:00:00Z" },
+  { _id: "sub20", categoryId: "cat10", name: "Productivity & Life Skills", description: "Time management, goal setting, and personal organization.", status: "Active", createdAt: "2024-01-24T11:00:00Z" },
 ];
 
 export const MOCK_THIRDCATEGORIES = [
@@ -393,6 +414,26 @@ export const MOCK_THIRDCATEGORIES = [
   { _id: "third8", subCategoryId: "sub5", name: "Logo Design", description: "Creating minimal, vector-based business logos and icons.", status: "Active", createdAt: "2024-01-24T10:00:00Z" },
   { _id: "third9", subCategoryId: "sub6", name: "Hindustani Classical", description: "Ragas, sargam exercises, and traditional Indian classical vocals.", status: "Active", createdAt: "2024-01-25T10:00:00Z" },
   { _id: "third10", subCategoryId: "sub7", name: "Acoustic Guitar", description: "Chords, strumming patterns, and basic fingerpicking.", status: "Active", createdAt: "2024-01-26T10:00:00Z" },
+  { _id: "third11", subCategoryId: "sub1", name: "React Hooks", description: "useState, useEffect, component patterns, and reusable hooks.", status: "Active", createdAt: "2024-01-26T11:00:00Z" },
+  { _id: "third12", subCategoryId: "sub2", name: "Android App Basics", description: "Building mobile apps with screens, navigation, and device APIs.", status: "Active", createdAt: "2024-01-27T10:00:00Z" },
+  { _id: "third13", subCategoryId: "sub3", name: "Data Visualization", description: "Charts, dashboards, and storytelling with datasets.", status: "Active", createdAt: "2024-01-27T11:00:00Z" },
+  { _id: "third14", subCategoryId: "sub4", name: "Product Photography", description: "Lighting setups, composition, and polished product imagery.", status: "Active", createdAt: "2024-01-28T10:00:00Z" },
+  { _id: "third15", subCategoryId: "sub5", name: "UI/UX Design", description: "Wireframes, prototyping, and user-centered interface design.", status: "Active", createdAt: "2024-01-28T11:00:00Z" },
+  { _id: "third16", subCategoryId: "sub6", name: "Voice Training", description: "Pitch control, breath support, and performance practice.", status: "Active", createdAt: "2024-01-29T10:00:00Z" },
+  { _id: "third17", subCategoryId: "sub7", name: "Piano Basics", description: "Chords, scales, rhythm, and beginner accompaniment.", status: "Active", createdAt: "2024-01-29T11:00:00Z" },
+  { _id: "third18", subCategoryId: "sub8", name: "Spanish Conversation", description: "Everyday speaking practice, pronunciation, and vocabulary.", status: "Active", createdAt: "2024-01-30T10:00:00Z" },
+  { _id: "third19", subCategoryId: "sub9", name: "Japanese Basics", description: "Greetings, kana, and essential beginner grammar.", status: "Active", createdAt: "2024-01-30T11:00:00Z" },
+  { _id: "third20", subCategoryId: "sub10", name: "Pranayama", description: "Breathing exercises for focus, calm, and energy balance.", status: "Active", createdAt: "2024-01-31T10:00:00Z" },
+  { _id: "third21", subCategoryId: "sub11", name: "Business Planning", description: "Idea validation, revenue models, and launch strategy.", status: "Active", createdAt: "2024-01-31T11:00:00Z" },
+  { _id: "third22", subCategoryId: "sub12", name: "SEO Basics", description: "Keyword research, on-page optimization, and search visibility.", status: "Active", createdAt: "2024-02-01T10:00:00Z" },
+  { _id: "third23", subCategoryId: "sub13", name: "Algebra Tutoring", description: "Equations, inequalities, functions, and exam practice.", status: "Active", createdAt: "2024-02-01T11:00:00Z" },
+  { _id: "third24", subCategoryId: "sub14", name: "Physics Fundamentals", description: "Mechanics, motion, energy, and problem-solving methods.", status: "Active", createdAt: "2024-02-02T10:00:00Z" },
+  { _id: "third25", subCategoryId: "sub15", name: "Cake Decoration", description: "Frosting, piping, layering, and presentation skills.", status: "Active", createdAt: "2024-02-02T11:00:00Z" },
+  { _id: "third26", subCategoryId: "sub16", name: "Indian Cooking", description: "Classic dishes, spices, and regional recipe techniques.", status: "Active", createdAt: "2024-02-03T10:00:00Z" },
+  { _id: "third27", subCategoryId: "sub17", name: "Football Coaching", description: "Passing, positioning, drills, and match awareness.", status: "Active", createdAt: "2024-02-03T11:00:00Z" },
+  { _id: "third28", subCategoryId: "sub18", name: "Strength Training", description: "Workout planning, progressive overload, and recovery.", status: "Active", createdAt: "2024-02-04T10:00:00Z" },
+  { _id: "third29", subCategoryId: "sub19", name: "Presentation Skills", description: "Structuring talks, stage presence, and audience engagement.", status: "Active", createdAt: "2024-02-04T11:00:00Z" },
+  { _id: "third30", subCategoryId: "sub20", name: "Time Management", description: "Prioritization, planning routines, and productive habits.", status: "Active", createdAt: "2024-02-05T10:00:00Z" },
 ];
 
 

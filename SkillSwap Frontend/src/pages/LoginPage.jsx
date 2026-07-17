@@ -57,10 +57,9 @@ const LoginPage = () => {
         return;
       }
 
-      login(loginUser);
-
-      toast.success(`Welcome back, ${loginUser.Email || loginUser.email}`);
-      // navigate(loginUser.role === "admin" ? "/admin" : "/dashboard");
+      login(loginUser, response.data.Token);
+      toast.success(`Welcome back, ${loginUser.name || loginUser.email}`);
+      navigate("/dashboard", { replace: true });
     }
     catch (err) {
       console.log(err.response?.data || err);

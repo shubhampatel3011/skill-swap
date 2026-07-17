@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const generateToken = require("../utils/jwt");
 const userTbl = require("../Models/userTbl");
 const verifyToken = require("../middleware/authMiddleware");
+const bcrypt = require("bcrypt");
 
 /* GET users listing. */
 router.get("/", verifyToken, async (req, res, next) => {
@@ -39,7 +40,7 @@ router.get("/:id", verifyToken, async (req, res, next) => {
   }
 });
 
-router.post("/", verifyToken, async (req, res, next) => {
+router.post("/", async (req, res, next) => {
   try {
     const db = new userTbl();
 
@@ -52,7 +53,14 @@ router.post("/", verifyToken, async (req, res, next) => {
     }
 
 // insert new user
-    const result = await db.AddUser(req.body);
+    const hashedPassword = await bcrypt.hash(req.body.Password, 10);
+
+    const userData = {
+      ...req.body,
+      Password: hashedPassword,
+    };
+
+    const result = await db.AddUser(userData);
     res.status(200).json({
       Message: result,
     });
@@ -66,15 +74,20 @@ router.post("/", verifyToken, async (req, res, next) => {
 
 router.post("/login", async (req, res) => {
   try {
+    const db = new userTbl();
     const { Email, Password } = req.body;
 
-    const user = await UserModel.Login(Email, Password);
+    // DEBUG — remove after fix
+    console.log("🔐 Login attempt → Email:", JSON.stringify(Email), "| Password:", JSON.stringify(Password));
 
-    if (!user) {
-      return res.status(401).json({
-        Message: "Invalid Email Or Password",
-      });
-    }
+   const user = await db.LoginUser(Email, Password);
+
+   if (!user) {
+     console.log("❌ LoginUser returned null for email:", Email);
+     return res.status(401).json({
+       Message: "Invalid Email Or Password",
+     });
+   }
 
     const token = generateToken(user);
 

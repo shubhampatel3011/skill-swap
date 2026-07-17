@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 var createError = require('http-errors');
 var express = require('express');
 const cors = require('cors');
@@ -15,7 +17,6 @@ const notificationRouter = require("./routes/notification");
 const categoryRouter = require('./routes/category');
 const subCategoryRouter = require('./routes/subCategory');
 const thirdCategoryRouter = require('./routes/thirdCategory');
-require("dotenv").config();
 
 var app = express();
 

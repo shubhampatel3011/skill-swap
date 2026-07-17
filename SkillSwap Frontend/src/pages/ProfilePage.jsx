@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import axios from "axios";
 
 const ProfilePage = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, token, updateProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -24,7 +24,10 @@ const ProfilePage = () => {
     if (!user?.userId) return;
     const fetchSkills = async () => {
       try {
-        const res = await axios.get(`http://localhost:3000/skills/user/${user.userId}`);
+        const authToken = token || localStorage.getItem("ss_token");
+        const res = await axios.get(`http://localhost:3000/skills/user/${user.userId}`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
         setMySkills(res.data?.List ?? []);
       } catch (err) {
         console.error(err);

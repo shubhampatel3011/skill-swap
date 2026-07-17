@@ -6,7 +6,7 @@ import axios from "axios";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -41,6 +41,7 @@ const RegisterPage = () => {
   const validateStep2 = () => {
     const e = {};
     if (!form.subCategory) e.subCategory = "Select a subCategory";
+    if (!form.skillsWanted.length) e.skillsWanted = "Select a subCategory";
     return e;
   };
 
@@ -50,7 +51,7 @@ const RegisterPage = () => {
     setErrors({});
     setStep(2);
   };
- 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const v = validateStep2();
@@ -75,14 +76,9 @@ const RegisterPage = () => {
       console.log("Sending data:", userData);
 
       const response = await axios.post("http://localhost:3000/users", userData);
-      const loginResponse = await axios.post("http://localhost:3000/users/login", {
-        Email: form.email,
-        Password: form.password,
-      });
 
-      toast.success(response.data.Message);
-      login(loginResponse.data.User);
-      navigate("/dashboard", { replace: true });
+      toast.success(response.data.Message || "Account created successfully! Please log in.");
+      navigate("/login", { replace: true });
 
     } catch (error) {
       console.error("Registration error:", error.response?.data || error.message);
@@ -141,7 +137,8 @@ const RegisterPage = () => {
                       <div className="input-group">
                         <span className="input-group-text"><i className="bi bi-phone"></i></span>
                         <input type="tel" id="regPhone" className={`form-control ${errors.phone ? "is-invalid" : ""}`}
-                          placeholder="9876543210" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+                          placeholder="9876543210" maxLength={10} inputMode="numeric" value={form.phone}
+                          onChange={(e) => set("phone", e.target.value.replace(/\D/g, "").slice(0, 10))} />
                         {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
                       </div>
                     </div>
@@ -200,10 +197,14 @@ const RegisterPage = () => {
                     </div>
                     <div className="col-12">
                       <label className="form-label fw-semibold">Skills I Want to Learn</label>
-                      <input type="text" className="form-control" id="regSkillsWant"
-                        placeholder="Spanish, Graphic Design (comma separated)"
-                        value={form.skillsWanted.join(", ")}
-                        onChange={(e) => set("skillsWanted", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
+                      <select id="regSkillsWant" className={`form-select ${errors.skillsWanted ? "is-invalid" : ""}`}
+                        value={form.skillsWanted[0] || ""} onChange={(e) => set("skillsWanted", e.target.value ? [e.target.value] : [])}>
+                        <option value="">Choose a subCategory...</option>
+                        {subCategories.map((c) => (
+                          <option key={c.subCategoryId} value={c.subCategoryName}>{c.subCategoryName}</option>
+                        ))}
+                      </select>
+                      {errors.skillsWanted && <div className="invalid-feedback">{errors.skillsWanted}</div>}
                     </div>
                   </div>
                   <div className="d-flex gap-2 mt-4">

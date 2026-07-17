@@ -31,7 +31,7 @@ const AdminLoginPage = () => {
     if (Object.keys(v).length) { setErrors(v); return; }
     setLoading(true);
     try {
-      const u = adminLogin(form.email, form.password);
+      const u = await adminLogin(form.email, form.password);
       if (u.role !== "admin") {
         toast.error("Only admin accounts can access this page");
         setLoading(false);
