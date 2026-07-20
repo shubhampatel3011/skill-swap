@@ -26,27 +26,28 @@ const AdminSwaps = () => {
   const getSwaps = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:3000/swap/${id}`,
+        "http://localhost:3000/swap",
         authConfig
       );
-      setSwaps(response.data?.List ?? []);
+
+      const swapsData = (response.data.List || []).map((s) => ({
+        swapId: s.swapId || s.SwapId,
+        senderName: s.senderName || s.SenderName || "",
+        receiverName: s.receiverName || s.ReceiverName || "",
+        offeredSkill: s.offeredSkill || s.OfferedSkill || "",
+        requestedSkill: s.requestedSkill || s.RequestedSkill || "",
+        status: s.status || s.Status || "Pending",
+        createdAt: s.createdAt || s.CreatedAt,
+        senderImage: s.senderImage || "",
+        receiverImage: s.receiverImage || "",
+      }));
+
+      setSwaps(swapsData);
     } catch (error) {
       console.log(error);
       toast.error("Failed to fetch swaps");
     }
   };
-
-  const swapsData = (response.data.List || []).map((s) => ({
-    id: s.swapId || s.SwapId,
-    senderName: s.senderName || s.SenderName || "",
-    receiverName: s.receiverName || s.ReceiverName || "",
-    offeredSkill: s.offeredSkill || s.OfferedSkill || "",
-    requestedSkill: s.requestedSkill || s.RequestedSkill || "",
-    status: s.status || s.Status || "Pending",
-    createdAt: s.createdAt || s.CreatedAt
-  }));
-
-  setSwaps(swapsData);
 
   useEffect(() => {
     getSwaps();
@@ -138,16 +139,10 @@ const AdminSwaps = () => {
                 {filtered.map((swap) => (
                   <tr key={swap.swapId}>
                     <td>
-                      <div className="d-flex align-items-center gap-2">
-                        <img src={swap.senderImage} alt={swap.senderName} className="rounded-circle" width={30} height={30} />
-                        <small className="fw-semibold">{swap.senderName}</small>
-                      </div>
+                      <small className="fw-semibold">{swap.senderName}</small>
                     </td>
                     <td>
-                      <div className="d-flex align-items-center gap-2">
-                        <img src={swap.receiverImage} alt={swap.receiverName} className="rounded-circle" width={30} height={30} />
-                        <small className="fw-semibold">{swap.receiverName}</small>
-                      </div>
+                      <small className="fw-semibold">{swap.receiverName}</small>
                     </td>
                     <td>
                       <small className="text-primary">{swap.offeredSkill}</small>
