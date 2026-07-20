@@ -10,13 +10,59 @@ const AdminSwaps = () => {
   const [swaps, setSwaps] = useState([]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [authConfig, setAuthConfig] = useState({});
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setAuthConfig({
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+  }, []);
+
+  const getSwaps = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/swap/${id}`,
+        authConfig
+      );
+      setSwaps(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch swaps");
+    }
+  };
+
+  const swapsData = (response.data.List || []).map((s) => ({
+    id: s.swapId || s.SwapId,
+    senderName: s.senderName || s.SenderName || "",
+    receiverName: s.receiverName || s.ReceiverName || "",
+    offeredSkill: s.offeredSkill || s.OfferedSkill || "",
+    requestedSkill: s.requestedSkill || s.RequestedSkill || "",
+    status: s.status || s.Status || "Pending",
+    createdAt: s.createdAt || s.CreatedAt
+  }));
+
+  setSwaps(swapsData);
+
+  useEffect(() => {
+    getSwaps();
+  }, []);
 
   const filtered = swaps.filter((s) => {
-    const matchFilter = filter === "all" || s.status === filter;
-    const matchSearch = s.senderName.toLowerCase().includes(search.toLowerCase()) ||
-      s.receiverName.toLowerCase().includes(search.toLowerCase()) ||
-      s.offeredSkill.toLowerCase().includes(search.toLowerCase());
+
+    const matchFilter =
+      filter === "all" ||
+      s.status === filter;
+
+    const searchText = search.toLowerCase();
+
+    const matchSearch = (s.senderName || "").toLowerCase().includes(searchText) || (s.receiverName || "").toLowerCase().includes(searchText) || (s.offeredSkill || "").toLowerCase().includes(searchText);
     return matchFilter && matchSearch;
+
   });
 
   const counts = {
@@ -29,17 +75,12 @@ const AdminSwaps = () => {
 
   const cancelSwap = async (id) => {
     try {
-      await fetch(`http://localhost:3000/swaps/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "rejected",
-        }),
+      await axios.put(`http://localhost:3000/swap/${id}`, {
+        status: "Rejected",
+        authConfig
       });
 
-      fetchSwaps();
+      getSwaps();
     } catch (error) {
       console.log(error);
     }
@@ -95,7 +136,7 @@ const AdminSwaps = () => {
               </thead>
               <tbody>
                 {filtered.map((swap) => (
-                  <tr key={swap._id}>
+                  <tr key={swap.swapId}>
                     <td>
                       <div className="d-flex align-items-center gap-2">
                         <img src={swap.senderImage} alt={swap.senderName} className="rounded-circle" width={30} height={30} />

@@ -12,11 +12,12 @@ const AdminSubCategories = () => {
   const [errors, setErrors] = useState({});
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
-  const [thirdCategories] = useState([]); // Placeholder for third categories if needed for counts
+  const [thirdCategories, setThirdCategories] = useState([]); // Placeholder for third categories if needed for counts
 
   useEffect(() => {
     getSubCategories();
     getCategories();
+    getThirdCategories();
   }, []);
 
   const getSubCategories = async () => {
@@ -36,6 +37,16 @@ const AdminSubCategories = () => {
     } catch (error) {
       console.log(error);
       toast.error("Failed to fetch categories");
+    }
+  };
+
+  const getThirdCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/thirdCategory");
+      setThirdCategories(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch third-categories");
     }
   };
 

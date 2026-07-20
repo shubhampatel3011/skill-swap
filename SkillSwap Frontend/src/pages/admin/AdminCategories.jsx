@@ -5,7 +5,7 @@ import axios from "axios";
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState([]);
-  const [subCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(null);
@@ -14,6 +14,7 @@ const AdminCategories = () => {
 
   useEffect(() => {
     getCategories();
+    getSubCategories();
   }, []);
 
   const getCategories = async () => {
@@ -23,6 +24,16 @@ const AdminCategories = () => {
     } catch (error) {
       console.log(error);
       toast.error("Failed to fetch categories");
+    }
+  };
+
+  const getSubCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/subCategory");
+      setSubCategories(response.data?.List ?? []);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch sub-categories");
     }
   };
 
