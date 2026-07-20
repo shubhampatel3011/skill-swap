@@ -4,14 +4,34 @@ class swapRequestTbl {
   async AddRequest(Model) {
     const db = await MyConnection();
 
+    // Fetch Sender's Name if not provided
+    let senderName = Model.senderName || "";
+    if (!senderName && Model.senderId) {
+      const [senders] = await db.execute("SELECT Name FROM usertbl WHERE userId=?", [Model.senderId]);
+      if (senders.length > 0) {
+        senderName = senders[0].Name || "";
+      }
+    }
+
+    // Fetch Receiver's Name if not provided
+    let receiverName = Model.receiverName || "";
+    if (!receiverName && Model.receiverId) {
+      const [receivers] = await db.execute("SELECT Name FROM usertbl WHERE userId=?", [Model.receiverId]);
+      if (receivers.length > 0) {
+        receiverName = receivers[0].Name || "";
+      }
+    }
+
     const [result] = await db.execute(
       `INSERT INTO swaptbl
-      (SenderId, ReceiverId, OfferedSkillId, OfferedSkill,
-      RequestedSkillId, RequestedSkill, Message, Status, ScheduledDate)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (senderId, senderName, receiverId, receiverName, offeredSkillId, offeredSkill,
+      requestedSkillId, requestedSkill, message, status, scheduledDate)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         Model.senderId,
+        senderName,
         Model.receiverId,
+        receiverName,
         Model.offeredSkillId,
         Model.offeredSkill,
         Model.requestedSkillId,

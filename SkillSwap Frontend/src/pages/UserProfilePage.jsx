@@ -149,7 +149,9 @@ const UserProfilePage = () => {
       const offeredSkillObj = mySkills.find((s) => String(s._id) === String(offeredSkillId));
       await axios.post(`${API}/swap`, {
         senderId: user.userId,
+        senderName: user.name,
         receiverId: profileUser.userId ?? id,
+        receiverName: profileUser.name,
         requestedSkillId: selectedSkill?._id ?? null,
         requestedSkill: selectedSkill?.title ?? null,
         offeredSkillId: Number(offeredSkillId),
