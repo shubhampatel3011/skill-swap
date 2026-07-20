@@ -16,7 +16,7 @@ router.get("/", verifyToken, async (req, res, next) => {
       List: result,
     });
   } catch (e) {
-      console.log("MYSQL ERROR:", e);
+    console.log("MYSQL ERROR:", e);
     res.status(500).json({
       error: e.message,
     });
@@ -33,7 +33,7 @@ router.get("/:id", verifyToken, async (req, res, next) => {
       Data: result,
     });
   } catch (e) {
-      console.log("MYSQL ERROR:", e);
+    console.log("MYSQL ERROR:", e);
     res.status(500).json({
       error: e.message,
     });
@@ -52,7 +52,7 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-// insert new user
+    // insert new user
     const hashedPassword = await bcrypt.hash(req.body.Password, 10);
 
     const userData = {
@@ -65,7 +65,7 @@ router.post("/", async (req, res, next) => {
       Message: result,
     });
   } catch (e) {
-      console.log("MYSQL ERROR:", e);
+    console.log("MYSQL ERROR:", e);
     res.status(500).json({
       error: e.message,
     });
@@ -80,14 +80,14 @@ router.post("/login", async (req, res) => {
     // DEBUG — remove after fix
     console.log("🔐 Login attempt → Email:", JSON.stringify(Email), "| Password:", JSON.stringify(Password));
 
-   const user = await db.LoginUser(Email, Password);
+    const user = await db.LoginUser(Email, Password);
 
-   if (!user) {
-     console.log("❌ LoginUser returned null for email:", Email);
-     return res.status(401).json({
-       Message: "Invalid Email Or Password",
-     });
-   }
+    if (!user) {
+      console.log("❌ LoginUser returned null for email:", Email);
+      return res.status(401).json({
+        Message: "Invalid Email Or Password",
+      });
+    }
 
     const token = generateToken(user);
 
@@ -105,6 +105,30 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Admin login — hardcoded credentials, no DB lookup, returns a real JWT
+const ADMIN_USERS = [
+  { userId: "admin_1", email: "admin@skillswap.com", password: "admin123", name: "Admin", role: "admin" },
+];
+
+router.post("/admin-login", async (req, res) => {
+  try {
+    const { Email, Password } = req.body;
+    const admin = ADMIN_USERS.find(
+      (a) => a.email === Email && a.password === Password
+    );
+
+    if (!admin) {
+      return res.status(401).json({ Message: "Invalid admin credentials" });
+    }
+
+    const token = generateToken(admin);
+    res.json({ Success: true, User: admin, Token: token });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ Message: "Server Error" });
+  }
+});
+
 router.delete("/:id", verifyToken, async (req, res, next) => {
   try {
     var id = req.params.id;
@@ -115,7 +139,7 @@ router.delete("/:id", verifyToken, async (req, res, next) => {
       Data: result,
     });
   } catch (e) {
-      console.log("MYSQL ERROR:", e);
+    console.log("MYSQL ERROR:", e);
     res.status(500).json({
       error: e.message,
     });
@@ -131,7 +155,7 @@ router.put("/:id", verifyToken, async (req, res, next) => {
       Message: result,
     });
   } catch (e) {
-      console.log("MYSQL ERROR:", e);
+    console.log("MYSQL ERROR:", e);
     res.status(500).json({
       error: e.message,
     });

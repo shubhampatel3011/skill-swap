@@ -3,7 +3,7 @@ var router = express.Router();
 const skillTbl = require("../Models/skillTbl");
 const verifyToken = require("../middleware/authMiddleware");
 
-// GET skills listing. 
+// GET skills listing.
 router.get("/", verifyToken, async (req, res, next) => {
   try {
     const db = new skillTbl();

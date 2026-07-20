@@ -47,6 +47,9 @@ const LoginPage = () => {
         userData
       );
 
+      localStorage.setItem("token", response.data.Token);
+      localStorage.setItem("user", JSON.stringify(response.data.User));
+
       console.log(response.data);
 
       const loginUser = response.data.User;

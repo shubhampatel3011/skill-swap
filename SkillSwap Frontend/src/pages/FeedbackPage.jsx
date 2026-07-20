@@ -91,16 +91,12 @@ const FeedbackPage = () => {
     };
 
     try {
-      await axios.post(`${API}/review`, {
-        reviewerId: user?.userId || null,
-        reviewedUserId: null,
-        swapId: null,
-        rating,
-        comment: comment.trim(),
-        category,
+      await axios.post(`${API}/feedback`, {
         userName: newFeedback.userName,
         userEmail: newFeedback.userEmail,
-        isAnonymous,
+        rating,
+        category,
+        comment: comment.trim(),
       });
 
       const saved = localStorage.getItem("website_feedback");

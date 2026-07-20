@@ -50,7 +50,17 @@ class reviewTbl {
   async GetAllReviews() {
     const db = await MyConnection();
 
-    const [result] = await db.execute(`SELECT * FROM reviewTbl`);
+    const [result] = await db.execute(`
+      SELECT r.*, 
+             u1.Name AS ReviewerName, 
+             u2.Name AS ReviewedUserName,
+             s.OfferedSkill,
+             s.RequestedSkill
+      FROM reviewTbl r
+      LEFT JOIN usertbl u1 ON r.ReviewerId = u1.userId
+      LEFT JOIN usertbl u2 ON r.ReviewedUserId = u2.userId
+      LEFT JOIN swaptbl s ON r.SwapId = s.swapId
+    `);
 
     db.end();
     return result;

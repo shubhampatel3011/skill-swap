@@ -11,6 +11,7 @@ const links = [
   { to: "/admin/sub-categories", icon: "bi-folder-symlink", label: "Sub-categories" },
   { to: "/admin/third-categories", icon: "bi-folder2-open", label: "Third-categories" },
   { to: "/admin/feedback", icon: "bi-chat-left-heart", label: "Feedback" },
+  { to: "/admin/reviews", icon: "bi-star", label: "Reviews" },
 ];
 
 const AdminSidebar = () => {

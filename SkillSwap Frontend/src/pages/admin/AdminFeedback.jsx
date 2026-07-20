@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { MOCK_FEEDBACK } from "../../data/mockData";
 import AdminSidebar from "../../components/AdminSidebar";
 import { toast } from "react-toastify";
+import axios from "axios";
+
+const API = "http://localhost:3000";
 
 const AdminFeedback = () => {
-  const [feedbacks, setFeedbacks] = useState(() => {
-    const saved = localStorage.getItem("website_feedback");
-    return saved ? JSON.parse(saved) : MOCK_FEEDBACK;
-  });
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [ratingFilter, setRatingFilter] = useState("");
@@ -19,8 +19,39 @@ const AdminFeedback = () => {
   const [adminNotesText, setAdminNotesText] = useState("");
 
   useEffect(() => {
-    localStorage.setItem("website_feedback", JSON.stringify(feedbacks));
-  }, [feedbacks]);
+    fetchFeedback();
+  }, []);
+
+  const normalizeFeedback = (f) => ({
+    _id: f.feedbackId ?? f.FeedbackId ?? f._id,
+    userName: f.userName ?? f.UserName ?? "Anonymous",
+    userEmail: f.userEmail ?? f.UserEmail ?? "",
+    rating: f.rating ?? f.Rating ?? 0,
+    category: f.category ?? f.Category ?? "Other",
+    comment: f.comment ?? f.Comment ?? "",
+    status: f.status ?? f.Status ?? "New",
+    adminNotes: f.adminNotes ?? f.AdminNotes ?? "",
+    createdAt: f.createdAt ?? f.CreatedAt ?? new Date().toISOString(),
+  });
+
+  const fetchFeedback = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/feedback`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const list = (response.data?.List ?? []).map(normalizeFeedback);
+      setFeedbacks(list);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load feedback from server.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Statistics calculation
   const totalCount = feedbacks.length;
@@ -49,16 +80,30 @@ const AdminFeedback = () => {
     return matchesSearch && matchesRating && matchesCategory && matchesStatus;
   });
 
-  const handleStatusChange = (id, newStatus) => {
-    setFeedbacks((prev) =>
-      prev.map((f) => {
-        if (f._id === id) {
-          toast.success(`Feedback status updated to ${newStatus}`);
-          return { ...f, status: newStatus };
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/feedback/status/${id}`, 
+        { status: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-        return f;
-      })
-    );
+      );
+      setFeedbacks((prev) =>
+        prev.map((f) => {
+          if (f._id === id) {
+            return { ...f, status: newStatus };
+          }
+          return f;
+        })
+      );
+      toast.success(`Feedback status updated to ${newStatus}`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update status.");
+    }
   };
 
   const handleOpenNotes = (feedback) => {
@@ -67,26 +112,51 @@ const AdminFeedback = () => {
     setShowNotesModal(true);
   };
 
-  const handleSaveNotes = (e) => {
+  const handleSaveNotes = async (e) => {
     e.preventDefault();
     if (!selectedFeedback) return;
 
-    setFeedbacks((prev) =>
-      prev.map((f) => {
-        if (f._id === selectedFeedback._id) {
-          toast.success("Admin notes updated successfully.");
-          return { ...f, adminNotes: adminNotesText.trim() };
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/feedback/notes/${selectedFeedback._id}`, 
+        { adminNotes: adminNotesText.trim() },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-        return f;
-      })
-    );
-    setShowNotesModal(false);
+      );
+      setFeedbacks((prev) =>
+        prev.map((f) => {
+          if (f._id === selectedFeedback._id) {
+            return { ...f, adminNotes: adminNotesText.trim() };
+          }
+          return f;
+        })
+      );
+      toast.success("Admin notes updated successfully.");
+      setShowNotesModal(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save admin notes.");
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to permanently delete this feedback entry?")) {
-      setFeedbacks((prev) => prev.filter((f) => f._id !== id));
-      toast.success("Feedback entry deleted.");
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(`${API}/feedback/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setFeedbacks((prev) => prev.filter((f) => f._id !== id));
+        toast.success("Feedback entry deleted.");
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to delete feedback entry.");
+      }
     }
   };
 
@@ -261,88 +331,96 @@ const AdminFeedback = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((feed) => (
-                  <tr key={feed._id}>
-                    <td>
-                      <div>
-                        <div className="fw-bold small">{feed.userName}</div>
-                        <small className="text-muted">{feed.userEmail || "Anonymous Submission"}</small>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="text-warning d-flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <i
-                            key={star}
-                            className={`bi ${star <= feed.rating ? "bi-star-fill" : "bi-star"} small`}
-                            style={{ fontSize: "12px" }}
-                          ></i>
-                        ))}
-                      </div>
-                      <small className="text-muted small">{feed.rating} / 5</small>
-                    </td>
-                    <td>
-                      <span className={`badge bg-opacity-15 border text-white text-uppercase px-2 py-1 fw-bold ${getCategoryBadgeClass(feed.category)}`} style={{ fontSize: "10px", letterSpacing: "0.03em" }}>
-                        {feed.category}
-                      </span>
-                    </td>
-                    <td style={{ maxWidth: 280 }}>
-                      <p className="text-muted small mb-0 text-truncate" title={feed.comment}>
-                        {feed.comment}
-                      </p>
-                    </td>
-                    <td>
-                      <select
-                        className={`form-select form-select-sm border bg-opacity-10 py-1 px-2 fw-semibold ${getStatusBadgeClass(feed.status)}`}
-                        style={{ fontSize: "11px", minWidth: "105px" }}
-                        value={feed.status}
-                        onChange={(e) => handleStatusChange(feed._id, e.target.value)}
-                      >
-                        <option value="New">New</option>
-                        <option value="In Review">In Review</option>
-                        <option value="Resolved">Resolved</option>
-                        <option value="Archived">Archived</option>
-                      </select>
-                    </td>
-                    <td style={{ maxWidth: 200 }}>
-                      {feed.adminNotes ? (
-                        <p className="text-secondary small mb-0 text-truncate" title={feed.adminNotes}>
-                          {feed.adminNotes}
-                        </p>
-                      ) : (
-                        <span className="text-muted small italic">None</span>
-                      )}
-                    </td>
-                    <td className="small text-muted">
-                      {new Date(feed.createdAt).toLocaleDateString()}
-                    </td>
-                    <td>
-                      <div className="d-flex gap-1">
-                        <button
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={() => handleOpenNotes(feed)}
-                          title="Notes / Resolve"
-                        >
-                          <i className="bi bi-chat-dots"></i>
-                        </button>
-                        <button
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleDelete(feed._id)}
-                          title="Delete Feedback"
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
-                      </div>
+                {loading ? (
+                  <tr>
+                    <td colSpan="8" className="text-center py-5 text-muted">
+                      <div className="spinner-border text-primary" role="status"></div>
+                      <p className="mt-2 mb-0">Loading feedback list...</p>
                     </td>
                   </tr>
-                ))}
-                {filtered.length === 0 && (
+                ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan="8" className="text-center py-5 text-muted">
                       <i className="bi bi-chat-left display-4 d-block mb-3"></i>
                       No feedbacks found matching current filters.
                     </td>
                   </tr>
+                ) : (
+                  filtered.map((feed) => (
+                    <tr key={feed._id}>
+                      <td>
+                        <div>
+                          <div className="fw-bold small">{feed.userName}</div>
+                          <small className="text-muted">{feed.userEmail || "Anonymous Submission"}</small>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="text-warning d-flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <i
+                              key={star}
+                              className={`bi ${star <= feed.rating ? "bi-star-fill" : "bi-star"} small`}
+                              style={{ fontSize: "12px" }}
+                            ></i>
+                          ))}
+                        </div>
+                        <small className="text-muted small">{feed.rating} / 5</small>
+                      </td>
+                      <td>
+                        <span className={`badge bg-opacity-15 border text-white text-uppercase px-2 py-1 fw-bold ${getCategoryBadgeClass(feed.category)}`} style={{ fontSize: "10px", letterSpacing: "0.03em" }}>
+                          {feed.category}
+                        </span>
+                      </td>
+                      <td style={{ maxWidth: 280 }}>
+                        <p className="text-muted small mb-0 text-truncate" title={feed.comment}>
+                          {feed.comment}
+                        </p>
+                      </td>
+                      <td>
+                        <select
+                          className={`form-select form-select-sm border bg-opacity-10 py-1 px-2 fw-semibold ${getStatusBadgeClass(feed.status)}`}
+                          style={{ fontSize: "11px", minWidth: "105px" }}
+                          value={feed.status}
+                          onChange={(e) => handleStatusChange(feed._id, e.target.value)}
+                        >
+                          <option value="New">New</option>
+                          <option value="In Review">In Review</option>
+                          <option value="Resolved">Resolved</option>
+                          <option value="Archived">Archived</option>
+                        </select>
+                      </td>
+                      <td style={{ maxWidth: 200 }}>
+                        {feed.adminNotes ? (
+                          <p className="text-secondary small mb-0 text-truncate" title={feed.adminNotes}>
+                            {feed.adminNotes}
+                          </p>
+                        ) : (
+                          <span className="text-muted small italic">None</span>
+                        )}
+                      </td>
+                      <td className="small text-muted">
+                        {new Date(feed.createdAt).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => handleOpenNotes(feed)}
+                            title="Notes / Resolve"
+                          >
+                            <i className="bi bi-chat-dots"></i>
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDelete(feed._id)}
+                            title="Delete Feedback"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

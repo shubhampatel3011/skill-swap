@@ -57,11 +57,11 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem("ss_user");
+      const storedUser = localStorage.getItem("ss_user") || localStorage.getItem("user");
       if (storedUser && storedUser !== "undefined") {
         setUser(normalizeUser(JSON.parse(storedUser)));
       }
-      const storedToken = localStorage.getItem("ss_token");
+      const storedToken = localStorage.getItem("ss_token") || localStorage.getItem("token");
       if (storedToken && storedToken !== "undefined") {
         setToken(storedToken);
       }
@@ -69,6 +69,8 @@ export const AuthProvider = ({ children }) => {
       console.error("Failed to parse user from localStorage:", err);
       localStorage.removeItem("ss_user");
       localStorage.removeItem("ss_token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
     }
     try {
       const storedAdmin = localStorage.getItem("ss_admin");
@@ -84,7 +86,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const interceptorId = axios.interceptors.request.use((config) => {
-      const storedToken = token || localStorage.getItem("ss_token");
+      const storedToken = token || localStorage.getItem("ss_token") || localStorage.getItem("token");
       if (storedToken) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${storedToken}`;
@@ -124,12 +126,32 @@ export const AuthProvider = ({ children }) => {
     return normalizedFound;
   };
 
-  const adminLogin = (email, password) => {
+  const adminLogin = async (email, password) => {
+    // Clear any stale tokens before logging in
+    setToken(null);
+    localStorage.removeItem("ss_token");
+    localStorage.removeItem("ss_user");
+
     const found = ADMIN_CREDENTIALS.find(
       (a) => a.email === email && a.password === password
     );
-
     if (!found) throw new Error("Invalid email or password.");
+
+    try {
+      // Get a real JWT from the backend so protected routes work
+      const response = await axios.post("http://localhost:3000/users/admin-login", {
+        Email: email,
+        Password: password,
+      });
+
+      if (response.data?.Token) {
+        setToken(response.data.Token);
+        localStorage.setItem("ss_token", response.data.Token);
+      }
+    } catch (err) {
+      // Backend unreachable — admin UI will work but API calls may fail
+      console.warn("Could not obtain admin JWT from backend:", err.message);
+    }
 
     const normalizedAdmin = normalizeUser(found);
     setAdmin(normalizedAdmin);

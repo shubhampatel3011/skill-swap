@@ -33,6 +33,7 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminSubCategories from "./pages/admin/AdminSubCategories";
 import AdminThirdCategories from "./pages/admin/AdminThirdCategories";
 import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminReviews from "./pages/admin/AdminReviews";
 
 const AdminLayout = ({ children }) => (
   <AdminRoute>{children}</AdminRoute>
@@ -61,6 +62,7 @@ function App() {
               <Route path="/admin/sub-categories" element={<AdminLayout><AdminSubCategories /></AdminLayout>} />
               <Route path="/admin/third-categories" element={<AdminLayout><AdminThirdCategories /></AdminLayout>} />
               <Route path="/admin/feedback" element={<AdminLayout><AdminFeedback /></AdminLayout>} />
+              <Route path="/admin/reviews" element={<AdminLayout><AdminReviews /></AdminLayout>} />
 
               {/* ── Public & User Routes ── */}
               <Route path="/*" element={

@@ -14,18 +14,24 @@ const AddSkillPage = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
 
   useEffect(() => {
     axios.get("http://localhost:3000/category")
       .then((res) => setCategories(res.data.List || []))
       .catch((err) => console.error("Failed to load categories:", err));
   }, []);
+  useEffect(() => {
+    axios.get("http://localhost:3000/subCategory")
+      .then((res) => setSubCategories(res.data.List || []))
+      .catch((err) => console.error("Failed to load subCategories:", err));
+  }, []);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const validate = () => {
     const e = {};
-    if (!form.title.trim()) e.title = "Skill title is required";
+    // if (!form.title.trim()) e.title = "Skill title is required";
     if (!form.category) e.category = "Select a category";
     if (!form.description.trim()) e.description = "Description is required";
     else if (form.description.length < 30) e.description = "At least 30 characters";
@@ -92,9 +98,13 @@ const AddSkillPage = () => {
             <form onSubmit={handleSubmit} noValidate>
               <div className="mb-3">
                 <label className="form-label fw-semibold">Skill Title <span className="text-danger">*</span></label>
-                <input type="text" id="skillTitle" className={`form-control ${errors.title ? "is-invalid" : ""}`}
-                  placeholder="e.g. React Development, Photography, Yoga..."
-                  value={form.title} onChange={(e) => set("title", e.target.value)} />
+                <select id="skillTitle" className={`form-select ${errors.title ? "is-invalid" : ""}`}
+                  value={form.title || ""} onChange={(e) => set("title", e.target.value ? e.target.value : "")}>
+                  <option value="">Choose a skill title...</option>
+                  {subCategories.map((c) => (
+                    <option key={c.subCategoryId} value={c.subCategoryName}>{c.subCategoryName}</option>
+                  ))}
+                </select>
                 {errors.title && <div className="invalid-feedback">{errors.title}</div>}
               </div>
 

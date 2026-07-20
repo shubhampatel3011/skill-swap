@@ -19,49 +19,90 @@ const AdminUsers = () => {
     return matchSearch && matchFilter;
   });
 
-const getUsers = async () => {
-  try {
-    const response = await axios.get("http://localhost:3000/users");
+  const getUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-    const usersData = response.data.List.filter((u) => u.role !== "admin");
+      // console.log("JWT Token:", token);
 
-    setUsers(usersData);
-  } catch (error) {
-    console.log(error);
-    toast.error("Failed to fetch users");
-  }
-};
+      const response = await axios.get(
+        "http://localhost:3000/users",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const normalize = (u) => ({
+        ...u,
+        _id: u.userId,
+        name: u.name,
+        email: u.email,
+        role: u.role || u.Role || "user",
+        isBlocked: u.isBlocked ?? u.IsBlocked ?? false,
+        rating: u.rating ?? 0,
+        reviewCount: u.reviewCount ?? 0,
+        location: u.location || u.Address || u.address || "",
+        profileImage: u.profileImage || u.ProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "User")}&background=0d9488&color=fff&size=128`,
+      });
+
+      const usersData = (response.data.List || [])
+        .map(normalize)
+        .filter((u) => u.role !== "admin");
+
+      setUsers(usersData);
+
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch users");
+    }
+  };
 
   const toggleBlock = async (id, currentStatus) => {
     try {
-      await axios.put(`http://localhost:3000/users/block/${id}`, {
-        isBlocked: !currentStatus,
-      });
+      const token = localStorage.getItem("token");
+
+      await axios.put(
+        `http://localhost:3000/users/block/${id}`,
+        {
+          isBlocked: !currentStatus,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       toast.success(
         currentStatus
           ? "User unblocked successfully"
-          : "User blocked successfully",
+          : "User blocked successfully"
       );
 
       getUsers();
     } catch (error) {
       console.log(error);
-      toast.error("Something went wrong");
     }
   };
 
   const deleteUser = async (id) => {
-    if (window.confirm("Delete this user permanently?")) {
-      try {
-        await axios.delete(`http://localhost:3000/users/${id}`);
-        setUsers((prev) => prev.filter((u) => u.userId !== id));
-        toast.success("User deleted.");
-         getUsers();
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to delete user");
-      }
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.delete(
+        `http://localhost:3000/users/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      getUsers();
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -150,7 +191,7 @@ const getUsers = async () => {
                       <div className="small">{u.email}</div>
                       <div className="small text-muted">{u.phone}</div>
                     </td>
-                    <td className="small text-muted">{u.address}</td>
+                    <td className="small text-muted">{u.location}</td>
                     <td>
                       <StarRating value={u.rating} size="xs" />
                       <div className="small text-muted">
