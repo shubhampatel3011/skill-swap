@@ -57,38 +57,62 @@ const HomePage = () => {
 
         if (sRes?.data?.List && Array.isArray(sRes.data.List) && sRes.data.List.length > 0) {
           // Normalize skill objects to match mockData shape when possible
-          const normalizedSkills = sRes.data.List.map((sk) => ({
-            _id: sk._id || sk.id || sk.SkillId || sk.SkillID,
-            userId: sk.UserId || sk.userId || sk.userID || sk.user_id,
-            name: sk.Name || sk.name || userList.find((u) => String((u._id || u.id || u.UserId || u.UserID)) === String(sk.UserId || sk.userId || sk.userID || sk.user_id))?.Name || userList.find((u) => String((u._id || u.id || u.UserId || u.UserID)) === String(sk.UserId || sk.userId || sk.userID || sk.user_id))?.name || "",
-            userName: sk.UserName || sk.userName || sk.Name || sk.name || sk.user || "",
-            userImage: sk.UserImage || sk.userImage || sk.profileImage || "",
-            title: sk.Title || sk.title || "",
-            category: sk.Category || sk.category || "",
-            description: sk.Description || sk.description || "",
-            experienceLevel: sk.ExperienceLevel || sk.experienceLevel || "",
-            availability: sk.Availability || sk.availability || "",
-            mode: sk.Mode || sk.mode || "",
-            rating: typeof sk.Rating !== 'undefined' ? sk.Rating : (sk.rating || 0),
-            reviewCount: sk.ReviewCount || sk.reviewCount || 0,
-            createdAt: sk.CreatedAt || sk.createdAt || new Date().toISOString(),
-          }));
+          const normalizedSkills = sRes.data.List.map((sk) => {
+            const skillOwnerId = sk.UserId || sk.userId || sk.userID || sk.user_id;
+            const owner = userList.find((u) => String(u._id || u.id || u.UserId || u.UserID) === String(skillOwnerId));
+            const ownerName = owner?.Name || owner?.name || sk.Name || sk.name || "Unknown user";
+            
+            let img = owner?.ProfileImage || owner?.profileImage || sk.profileImage || "";
+            if (img && !img.startsWith("http://") && !img.startsWith("https://") && !img.startsWith("data:")) {
+              img = `http://localhost:3000/uploads/users/${img}`;
+            }
+            if (!img) {
+              img = `https://ui-avatars.com/api/?name=${encodeURIComponent(ownerName)}&background=0d9488&color=fff&size=128`;
+            }
+
+            return {
+              _id: sk._id || sk.id || sk.SkillId || sk.SkillID,
+              userId: skillOwnerId,
+              name: ownerName,
+              userName: sk.UserName || sk.userName || ownerName,
+              userImage: img,
+              title: sk.Title || sk.title || "",
+              category: sk.Category || sk.category || "",
+              description: sk.Description || sk.description || "",
+              experienceLevel: sk.ExperienceLevel || sk.experienceLevel || "",
+              availability: sk.Availability || sk.availability || "",
+              mode: sk.Mode || sk.mode || "",
+              rating: typeof sk.Rating !== 'undefined' ? sk.Rating : (sk.rating || 0),
+              reviewCount: sk.ReviewCount || sk.reviewCount || 0,
+              createdAt: sk.CreatedAt || sk.createdAt || new Date().toISOString(),
+            };
+          });
           setSkills(normalizedSkills);
         }
 
         if (userList.length > 0) {
-          const normalizedUsers = userList.map((u) => ({
-            _id: u._id || u.id || u.UserId || u.UserID,
-            name: u.Name || u.name || "",
-            email: u.Email || u.email || "",  
-            phone: u.Mobile || u.mobile || u.phone || "",
-            location: u.Address || u.address || u.location || "",
-            bio: u.Bio || u.bio || "",
-            profileImage: u.ProfileImage || u.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.Name || u.name || "User")}&background=0d9488&color=fff&size=128`,
-            role: u.Role || u.role || "user",
-            rating: typeof u.Rating !== 'undefined' ? u.Rating : (u.rating || 5),
-            reviewCount: u.ReviewCount || u.reviewCount || 0,
-          }));
+          const normalizedUsers = userList.map((u) => {
+            let img = u.ProfileImage || u.profileImage;
+            if (img && !img.startsWith("http://") && !img.startsWith("https://") && !img.startsWith("data:")) {
+              img = `http://localhost:3000/uploads/users/${img}`;
+            }
+            if (!img) {
+              const uName = u.Name || u.name || "User";
+              img = `https://ui-avatars.com/api/?name=${encodeURIComponent(uName)}&background=0d9488&color=fff&size=128`;
+            }
+            return {
+              _id: u._id || u.id || u.UserId || u.UserID,
+              name: u.Name || u.name || "",
+              email: u.Email || u.email || "",  
+              phone: u.Mobile || u.mobile || u.phone || "",
+              location: u.Address || u.address || u.location || "",
+              bio: u.Bio || u.bio || "",
+              profileImage: img,
+              role: u.Role || u.role || "user",
+              rating: typeof u.Rating !== 'undefined' ? u.Rating : (u.rating || 5),
+              reviewCount: u.ReviewCount || u.reviewCount || 0,
+            };
+          });
           setUsers(normalizedUsers);
         }
       } catch (err) {
@@ -109,7 +133,7 @@ const HomePage = () => {
   return (
     <>
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="ss-hero d-flex align-items-center">
+      <section className="ss-hero d-flex align-items-center " style={{ height: "calc(100vh - 64px)" }}>
         <div className="container py-5">
           <div className="row align-items-center g-5">
             <div className="col-lg-6">
@@ -149,14 +173,21 @@ const HomePage = () => {
             <div className="col-lg-6 d-none d-lg-flex justify-content-center">
               <div className="ss-hero-cards-grid">
                 {featuredSkills.slice(0, 4).map((skill, i) => (
-                  <div key={skill.userId} className={`ss-hero-mini-card ss-card-anim-${i} d-flex flex-column justify-content-between gap-2 h-100`}>
+                  <div key={skill._id || i} className={`ss-hero-mini-card ss-card-anim-${i} d-flex flex-column justify-content-between gap-2 h-100`}>
                     <div className="d-flex align-items-center gap-2">
-                      <div className="ss-nav-avatar rounded-circle border-2 bg-dark bg-opacity-75 d-flex p-3 fs-5 align-items-center justify-content-center text-light fw-bold shadow">
-                        {skill.userName.charAt(0).toUpperCase()}
+                      <img
+                        src={skill.userImage}
+                        alt={skill.name}
+                        className="rounded-circle ss-profile-avatar"
+                        width={45}
+                        height={45}
+                      />
+                      <div className="d-flex flex-column min-w-0 ">
+                        <span className="small fw-semibold text-truncate" title={skill.title}>{skill.title}</span>
+                        <span className="text-white-50 text-truncate" style={{ fontSize: "12px" }}>by {skill.name}</span>
                       </div>
-                      <span className="small fw-semibold text-truncate" title={skill.title}>{skill.title}</span>
                     </div>
-                    <div className="d-flex align-items-center justify-content-between mt-auto">
+                    <div className="d-flex align-items-center justify-content-between mt-auto pt-2">
                       <span className="badge bg-primary bg-opacity-15 small text-truncate" style={{ maxWidth: "150px" }} title={skill.category}>{skill.category}</span>
                       <StarRating value={skill.rating} size="xs" />
                     </div>
@@ -358,20 +389,22 @@ const HomePage = () => {
       </section>
 
       {/* ── CTA ────────────────────────────────────────────────── */}
-      <section className="ss-cta py-6">
-        <div className="container py-5 text-center">
-          <h2 className="display-5 fw-bold text-white mb-3">Ready to Start Swapping?</h2>
-          <p className="text-white-50 lead mb-4">Join 1,200+ community members exchanging skills today.</p>
-          <div className="d-flex gap-3 justify-content-center flex-wrap">
-            <Link to="/register" className="btn btn-light btn-lg px-5 fw-semibold text-primary">
-              Join Free <i className="bi bi-arrow-right ms-1"></i>
-            </Link>
-            <Link to="/skills" className="btn btn-outline-light btn-lg px-5">
-              Browse Skills
-            </Link>
+      {!user && (
+        <section className="ss-cta py-6">
+          <div className="container py-5 text-center">
+            <h2 className="display-5 fw-bold text-white mb-3">Ready to Start Swapping?</h2>
+            <p className="text-white-50 lead mb-4">Join 1,200+ community members exchanging skills today.</p>
+            <div className="d-flex gap-3 justify-content-center flex-wrap">
+              <Link to="/register" className="btn btn-light btn-lg px-5 fw-semibold text-primary">
+                Join Free <i className="bi bi-arrow-right ms-1"></i>
+              </Link>
+              <Link to="/skills" className="btn btn-outline-light btn-lg px-5">
+                Browse Skills
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 };

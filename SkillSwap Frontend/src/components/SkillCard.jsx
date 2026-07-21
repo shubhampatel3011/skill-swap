@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import StarRating from "./StarRating";
 import axios from "axios";
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const categoryColors = {
   Technology: "primary",
@@ -18,10 +20,44 @@ const categoryColors = {
 const modeIcon = { Online: "bi-wifi", Offline: "bi-geo-alt", Both: "bi-globe" };
 
 const SkillCard = ({ skill, onRequestSwap }) => {
+  const [allUsers, setAllUsers] = useState([]);
+  const { user } = useAuth();
+  const { token } = useAuth();
+  const authConfig = { headers: { Authorization: `Bearer ${token}` } };
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/users", authConfig);
+      setAllUsers(response.data.List || response.data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      getUsers();
+    }
+  }, [user]);
+
   const color = categoryColors[skill.category] || "secondary";
-  const userName = skill.name || "Unknown user";
-  const userImage = skill.userProfileImage || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+  // Find the creator in our loaded list to get up-to-date name & avatar
+  const creator = allUsers.find(
+    (u) => String(u.userId || u._id) === String(skill.userId)
+  );
+
+  const userName = creator?.name || creator?.Name || skill.name || skill.Name || "Unknown user";
   
+  // Format profile image
+  let userImage = creator?.profileImage || creator?.ProfileImage || skill.profileImage || skill.ProfileImage;
+  if (userImage && !userImage.startsWith("http://") && !userImage.startsWith("https://") && !userImage.startsWith("data:")) {
+    userImage = `http://localhost:3000/uploads/users/${userImage}`;
+  }
+  if (!userImage) {
+    userImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0d9488&color=fff&size=128`;
+  }
+
   return (
     <div className="card ss-skill-card h-100 border-0 shadow-sm">
       <div
@@ -38,9 +74,13 @@ const SkillCard = ({ skill, onRequestSwap }) => {
       <div className="card-body d-flex flex-column">
         <h5 className="card-title fw-bold mb-1">{skill.title}</h5>
         <div className="d-flex align-items-center gap-2 mb-2">
-          <div className="ss-nav-avatar rounded-circle border-2 bg-dark bg-opacity-75 d-flex p-3 fs-5 align-items-center justify-content-center text-light fw-bold shadow">
-            {userName.charAt(0).toUpperCase()}
-          </div>
+          <img
+            src={userImage}
+            alt={userName}
+            className="rounded-circle ss-profile-avatar"
+            width={40}
+            height={40}
+          />
           <Link
             to={`/users/${skill.userId}`}
             className="text-muted small ss-link"
@@ -49,7 +89,7 @@ const SkillCard = ({ skill, onRequestSwap }) => {
           </Link>
         </div>
         <p className="card-text text-muted small flex-grow-1">
-          {skill.description.length > 100
+          {skill.description && skill.description.length > 100
             ? skill.description.slice(0, 100) + "…"
             : skill.description}
         </p>

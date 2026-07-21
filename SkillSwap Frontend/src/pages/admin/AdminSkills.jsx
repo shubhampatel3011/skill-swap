@@ -16,12 +16,19 @@ const AdminSkills = () => {
   }, []);
 
   const filtered = skills.filter((s) => {
-    const matchSearch = s.title.toLowerCase().includes(search.toLowerCase()) || s.userName.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      s.title.toLowerCase().includes(search.toLowerCase()) ||
+      (s.userName || s.name || "").toLowerCase().includes(search.toLowerCase());
     const matchCat = !category || s.category === category;
     return matchSearch && matchCat;
   });
 
   const categories = [...new Set(skills.map((s) => s.category))];
+
+  const clearFilters = () => {
+    setSearch("");
+    setCategory("");
+  };
 
   const getSkills = async () => {
     try {
@@ -92,6 +99,14 @@ const AdminSkills = () => {
           </select>
         </div>
 
+        {filtered.length === 0 ? (
+          <div className="text-center py-5">
+            <i className="bi bi-search display-4 text-muted d-block mb-3"></i>
+            <h5 className="text-muted">No skills found</h5>
+            <p className="text-muted small mb-3">Try adjusting your filters or search term.</p>
+            <button className="btn ss-btn-primary" onClick={clearFilters}>Clear Filters</button>
+          </div>
+        ) : (
         <div className="row g-3">
           {filtered.map((skill) => (
             <div key={skill._id ?? skill.skillId ?? `${skill.userId}-${skill.title}`} className="col-md-6 col-xl-4">
@@ -105,9 +120,9 @@ const AdminSkills = () => {
                   </div>
                   <div className="d-flex align-items-center gap-2 mb-2">
                     <div className="ss-nav-avatar rounded-circle border-2 bg-dark bg-opacity-75 d-flex p-3 fs-5 align-items-center justify-content-center text-light fw-bold shadow">
-                      {skill.name.charAt(0).toUpperCase()}
+                      {(skill.name || skill.userName || "U").charAt(0).toUpperCase()}
                     </div>
-                    <small className="text-muted">{skill.name}</small>
+                    <small className="text-muted">{skill.name || skill.userName || "Unknown"}</small>
                   </div>
                   <p className="text-muted small mb-2">
                     {skill.description.slice(0, 80)}…
@@ -135,6 +150,8 @@ const AdminSkills = () => {
             </div>
           ))}
         </div>
+          )
+        }
       </div>
     </div>
   );

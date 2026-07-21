@@ -11,9 +11,18 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", password: "", confirmPassword: "",
-    location: "", bio: "", subCategory: "", skillsWanted: [],
+    location: "", bio: "", subCategory: "", skillsWanted: [], profileImage: null,
   });
+  const [imagePreview, setImagePreview] = useState(null);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
   const [subCategories, setSubCategories] = useState([]);
 
   useEffect(() => {
@@ -62,20 +71,26 @@ const RegisterPage = () => {
 
     setLoading(true);
     try {
-      const userData = {
-        Name: form.name,
-        Email: form.email,
-        Mobile: form.phone,
-        Password: form.password,
-        Address: form.location,
-        Skills: form.subCategory,
-        Bio: form.bio,
-        Intrest: form.skillsWanted.join(", "),
-      };
+      const formData = new FormData();
+      formData.append("Name", form.name);
+      formData.append("Email", form.email);
+      formData.append("Mobile", form.phone);
+      formData.append("Password", form.password);
+      formData.append("Address", form.location);
+      formData.append("Skills", form.subCategory);
+      formData.append("Bio", form.bio);
+      formData.append("Intrest", form.skillsWanted.join(", "));
+      if (form.profileImage) {
+        formData.append("profileImage", form.profileImage);
+      }
 
-      console.log("Sending data:", userData);
+      console.log("Sending registration data via FormData...");
 
-      const response = await axios.post("http://localhost:3000/users", userData);
+      const response = await axios.post("http://localhost:3000/users", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       toast.success(response.data.Message || "Account created successfully! Please log in.");
       navigate("/login", { replace: true });
@@ -114,6 +129,47 @@ const RegisterPage = () => {
               {step === 1 && (
                 <div>
                   <div className="row g-3">
+                    <div className="col-12 text-center mb-2">
+                      <div className="position-relative d-inline-block">
+                        <div
+                          className="rounded-circle border overflow-hidden d-flex align-items-center justify-content-center bg-light shadow-sm"
+                          style={{ width: "90px", height: "90px", cursor: "pointer", border: "2px solid #eaeaea" }}
+                          onClick={() => document.getElementById("profileImageInput").click()}
+                        >
+                          {imagePreview ? (
+                            <img src={imagePreview} alt="Profile Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            <i className="bi bi-camera text-muted fs-3"></i>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 p-0 d-flex align-items-center justify-content-center"
+                          style={{ width: "28px", height: "28px", border: "2px solid white" }}
+                          onClick={() => document.getElementById("profileImageInput").click()}
+                        >
+                          <i className="bi bi-pencil-fill" style={{ fontSize: "10px" }}></i>
+                        </button>
+                        <input
+                          type="file"
+                          id="profileImageInput"
+                          accept="image/*"
+                          className="d-none"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              if (imagePreview) {
+                                URL.revokeObjectURL(imagePreview);
+                              }
+                              set("profileImage", file);
+                              setImagePreview(URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="small text-muted mt-2 fw-semibold">Profile Picture</div>
+                    </div>
+
                     <div className="col-12">
                       <label className="form-label fw-semibold">Full Name</label>
                       <div className="input-group">

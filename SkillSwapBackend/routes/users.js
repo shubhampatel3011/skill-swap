@@ -5,6 +5,7 @@ const generateToken = require("../utils/jwt");
 const userTbl = require("../Models/userTbl");
 const verifyToken = require("../middleware/authMiddleware");
 const bcrypt = require("bcrypt");
+const upload = require("../middleware/upload");
 
 /* GET users listing. */
 router.get("/", verifyToken, async (req, res, next) => {
@@ -40,9 +41,14 @@ router.get("/:id", verifyToken, async (req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", upload.single("profileImage"), async (req, res, next) => {
   try {
     const db = new userTbl();
+
+    // Handle file upload
+    if(req.file){
+      req.body.profileImage = req.file ? req.file.filename : null;
+    }
 
     // check existing email
     const emailCheck = await db.CheckEmail(req.body.Email);
@@ -146,13 +152,20 @@ router.delete("/:id", verifyToken, async (req, res, next) => {
   }
 });
 
-router.put("/:id", verifyToken, async (req, res, next) => {
+router.put("/:id", verifyToken, upload.single("profileImage"), async (req, res, next) => {
   try {
     var id = req.params.id;
     const db = new userTbl();
+
+    // Handle file upload
+    if (req.file) {
+      req.body.profileImage = req.file.filename;
+    }
+
     const result = await db.UpdateUser(id, req.body);
     res.status(200).json({
       Message: result,
+      ProfileImage: req.file ? req.file.filename : undefined
     });
   } catch (e) {
     console.log("MYSQL ERROR:", e);

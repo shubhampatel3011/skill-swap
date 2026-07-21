@@ -18,6 +18,7 @@
     "http-errors": "~1.6.3",
     "jsonwebtoken": "^9.0.3",
     "morgan": "~1.9.1",
+    "multer": "^2.2.0",
     "mysql2": "^3.22.6",
     "nodemon": "^3.1.14"
   }

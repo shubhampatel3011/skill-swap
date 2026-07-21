@@ -14,6 +14,7 @@ const ProfilePage = () => {
     bio: user?.bio || "",
     location: user?.location || "",
     phone: user?.phone || "",
+    profileImage: null,
   });
 
   const [mySkills, setMySkills] = useState([]);
@@ -41,11 +42,13 @@ const ProfilePage = () => {
 
   // Keep form in sync if user changes (e.g. after page reload)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({
       name: user?.name || "",
       bio: user?.bio || "",
       location: user?.location || "",
       phone: user?.phone || "",
+      profileImage: null,
     });
   }, [user]);
 
@@ -87,9 +90,26 @@ const ProfilePage = () => {
                 width={100}
                 height={100}
               />
-              <label className="ss-avatar-upload-btn" title="Change Photo">
+              <label className="ss-avatar-upload-btn" title="Change Photo" style={{ cursor: "pointer" }}>
                 <i className="bi bi-camera-fill"></i>
-                <input type="file" accept="image/*" className="d-none" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="d-none"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setSaving(true);
+                      const ok = await updateProfile({ profileImage: file });
+                      setSaving(false);
+                      if (ok) {
+                        toast.success("Profile image updated successfully!");
+                      } else {
+                        toast.error("Failed to update profile image.");
+                      }
+                    }
+                  }}
+                />
               </label>
             </div>
             <h4 className="fw-bold mb-0">{user?.name}</h4>
@@ -165,6 +185,21 @@ const ProfilePage = () => {
                       rows={3}
                       value={form.bio}
                       onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">Profile Image</label>
+                    <input
+                      type="file"
+                      className="form-control"
+                      id="editProfileImage"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setForm({ ...form, profileImage: file });
+                        }
+                      }}
                     />
                   </div>
                 </div>

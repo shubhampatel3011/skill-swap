@@ -42,7 +42,11 @@ const normalizeUser = (rawUser) => {
   normalized.bio = rawUser.bio || rawUser.Bio || "";
   normalized.Bio = normalized.bio;
 
-  normalized.profileImage = rawUser.profileImage || rawUser.ProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(normalized.name)}&background=0d9488&color=fff&size=128`;
+  let img = rawUser.profileImage || rawUser.ProfileImage;
+  if (img && !img.startsWith("http://") && !img.startsWith("https://") && !img.startsWith("data:")) {
+    img = `http://localhost:3000/uploads/users/${img}`;
+  }
+  normalized.profileImage = img || `https://ui-avatars.com/api/?name=${encodeURIComponent(normalized.name)}&background=0d9488&color=fff&size=128`;
   normalized.ProfileImage = normalized.profileImage;
 
   return normalized;
@@ -130,7 +134,9 @@ export const AuthProvider = ({ children }) => {
     // Clear any stale tokens before logging in
     setToken(null);
     localStorage.removeItem("ss_token");
+    localStorage.removeItem("token");
     localStorage.removeItem("ss_user");
+    localStorage.removeItem("user");
 
     const found = ADMIN_CREDENTIALS.find(
       (a) => a.email === email && a.password === password
@@ -147,6 +153,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data?.Token) {
         setToken(response.data.Token);
         localStorage.setItem("ss_token", response.data.Token);
+        localStorage.setItem("token", response.data.Token);
       }
     } catch (err) {
       // Backend unreachable — admin UI will work but API calls may fail
@@ -185,24 +192,54 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem("ss_user");
     localStorage.removeItem("ss_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
   const adminLogout = () => {
     setAdmin(null);
     localStorage.removeItem("ss_admin");
+    localStorage.removeItem("ss_token");
+    localStorage.removeItem("token");
   };
 
   const updateProfile = async (updates) => {
     if (!user) return false;
     try {
-      await axios.put(`http://localhost:3000/users/${user.userId}`, {
-        Name: updates.name || user.name,
-        Email: updates.email || user.email,
-        Mobile: updates.phone || user.phone || "",
-        Address: updates.location || user.location || "",
-        Bio: updates.bio || user.bio || "",
+      let payload;
+      let headers = {};
+
+      if (updates.profileImage) {
+        const formData = new FormData();
+        formData.append("Name", updates.name || user.name);
+        formData.append("Email", updates.email || user.email);
+        formData.append("Mobile", updates.phone || user.phone || "");
+        formData.append("Address", updates.location || user.location || "");
+        formData.append("Bio", updates.bio || user.bio || "");
+        formData.append("profileImage", updates.profileImage);
+        
+        payload = formData;
+        headers["Content-Type"] = "multipart/form-data";
+      } else {
+        payload = {
+          Name: updates.name || user.name,
+          Email: updates.email || user.email,
+          Mobile: updates.phone || user.phone || "",
+          Address: updates.location || user.location || "",
+          Bio: updates.bio || user.bio || "",
+        };
+      }
+
+      const res = await axios.put(`http://localhost:3000/users/${user.userId}`, payload, { headers });
+      
+      const newProfileImage = res.data?.ProfileImage || user.ProfileImage;
+
+      const updated = normalizeUser({ 
+        ...user, 
+        ...updates, 
+        profileImage: newProfileImage,
+        ProfileImage: newProfileImage
       });
-      const updated = normalizeUser({ ...user, ...updates });
       setUser(updated);
       localStorage.setItem("ss_user", JSON.stringify(updated));
       return true;

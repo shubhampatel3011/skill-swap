@@ -3,7 +3,7 @@ require("dotenv").config();
 var createError = require('http-errors');
 var express = require('express');
 const cors = require('cors');
-var path = require('path');
+const path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
@@ -43,6 +43,7 @@ app.use('/notification', notificationRouter);
 app.use('/category', categoryRouter);
 app.use('/subCategory', subCategoryRouter);
 app.use('/thirdCategory', thirdCategoryRouter)
+app.use("/uploads",express.static(path.join(__dirname,"uploads")))
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -96,6 +96,7 @@ const SkillsPage = () => {
           ...s,
           _id: s.skillId ?? s._id,
           title: s.Title ?? s.title ?? "",
+          profileImage: s.profileImage || "https://ui-avatars.com/api/?name=Your+Skill&background=0d9488&color=fff"
         }))
       );
     } catch (err) {

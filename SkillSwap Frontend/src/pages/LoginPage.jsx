@@ -35,16 +35,16 @@ const LoginPage = () => {
     }
     setLoading(true);
     try {
-      const userData   = {
+      const formData   = {
         Email: form.email,
         Password: form.password,
       };
 
-      console.log("Sending: ", userData);
+      console.log("Sending: ", formData);
 
       const response = await axios.post(
         "http://localhost:3000/users/login",
-        userData
+        formData
       );
 
       localStorage.setItem("token", response.data.Token);

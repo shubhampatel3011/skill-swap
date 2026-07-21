@@ -7,8 +7,8 @@ class userTbl {
     const db = await MyConnection();
     const [result] = await db.execute(
       `INSERT INTO usertbl
-      (Name, Email, Mobile, Password, Address, Skills, Bio, Intrest)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (Name, Email, Mobile, Password, Address, Skills, Bio, Intrest, ProfileImage)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         Model.Name,
         Model.Email,
@@ -18,6 +18,7 @@ class userTbl {
         Model.Skills,
         Model.Bio,
         Model.Intrest,
+        Model.profileImage || Model.ProfileImage || null,
       ],
     );
     db.end();
@@ -109,12 +110,20 @@ class userTbl {
   // update profile data
   async UpdateUser(id, Model) {
     const db = await MyConnection();
-    const [result] = await db.execute(
-      `UPDATE usertbl
-       SET Name=?, Email=?, Mobile=?, Address=?, Bio=?
-       WHERE userId=?`,
-      [Model.Name, Model.Email, Model.Mobile, Model.Address, Model.Bio, id],
-    );
+    
+    let query = `UPDATE usertbl SET Name=?, Email=?, Mobile=?, Address=?, Bio=?`;
+    const params = [Model.Name, Model.Email, Model.Mobile, Model.Address, Model.Bio];
+    
+    const img = Model.profileImage || Model.ProfileImage;
+    if (img) {
+      query += `, ProfileImage=?`;
+      params.push(img);
+    }
+    
+    query += ` WHERE userId=?`;
+    params.push(id);
+
+    const [result] = await db.execute(query, params);
     db.end();
     if (result) {
       return result;

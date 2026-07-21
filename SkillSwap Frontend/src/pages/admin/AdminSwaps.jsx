@@ -10,24 +10,16 @@ const AdminSwaps = () => {
   const [swaps, setSwaps] = useState([]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [authConfig, setAuthConfig] = useState({});
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setAuthConfig({
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    }
-  }, []);
-
   const getSwaps = async () => {
     try {
+      const token = localStorage.getItem("token");
       const response = await axios.get(
         "http://localhost:3000/swap",
-        authConfig
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const swapsData = (response.data.List || []).map((s) => ({
@@ -76,10 +68,16 @@ const AdminSwaps = () => {
 
   const cancelSwap = async (id) => {
     try {
-      await axios.put(`http://localhost:3000/swap/${id}`, {
-        status: "Rejected",
-        authConfig
-      });
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `http://localhost:3000/swap/${id}/status`,
+        { status: "Rejected" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       getSwaps();
     } catch (error) {
@@ -122,6 +120,14 @@ const AdminSwaps = () => {
         </div>
 
         {/* Table */}
+
+        {filtered.length === 0 ? (
+          <div className="text-center py-5">
+            <i className="bi bi-arrow-left-right display-4 text-muted d-block mb-3"></i>
+            <h5 className="text-muted">No {filter !== "all" ? filter.toLowerCase() : ""} swaps found</h5>
+            <p className="text-muted small">Browse skills and send swap requests to get started!</p>
+          </div>
+        ) :(
         <div className="card border-0 shadow-sm overflow-hidden">
           <div className="table-responsive">
             <table className="table table-hover mb-0">
@@ -140,9 +146,11 @@ const AdminSwaps = () => {
                   <tr key={swap.swapId}>
                     <td>
                       <small className="fw-semibold">{swap.senderName}</small>
+                      <small className="fw-semibold">{swap.senderId}</small>
                     </td>
                     <td>
                       <small className="fw-semibold">{swap.receiverName}</small>
+                      <small className="fw-semibold">{swap.receiverId}</small>
                     </td>
                     <td>
                       <small className="text-primary">{swap.offeredSkill}</small>
@@ -157,11 +165,8 @@ const AdminSwaps = () => {
                     <td className="small text-muted">{new Date(swap.createdAt).toLocaleDateString()}</td>
                     <td>
                       <div className="d-flex gap-1">
-                        <button className="btn btn-sm btn-outline-secondary" title="View Details">
-                          <i className="bi bi-eye"></i>
-                        </button>
                         {swap.status !== "Rejected" && swap.status !== "Completed" && (
-                          <button className="btn btn-sm btn-outline-danger" onClick={() => cancelSwap(swap._id)} title="Cancel Swap">
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => cancelSwap(swap.swapId)} title="Cancel Swap">
                             <i className="bi bi-x-circle"></i>
                           </button>
                         )}
@@ -173,6 +178,7 @@ const AdminSwaps = () => {
             </table>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

@@ -118,9 +118,13 @@ const DashboardPage = () => {
       {/* Welcome Banner */}
       <div className="ss-dashboard-banner d-flex align-items-center justify-content-between flex-wrap gap-3 p-4 rounded-4 mb-4">
         <div className="d-flex align-items-center gap-3">
-          <div className="ss-nav-avatar rounded-circle border-2 border-white d-flex p-4 fs-5 align-items-center justify-content-center text-white fw-bold shadow">
-            {user?.name?.charAt(0).toUpperCase()}
-          </div>
+          <img
+            src={user?.profileImage}
+            alt={user?.name}
+            className="rounded-circle ss-profile-avatar"
+            width={50}
+            height={50}
+          />
           <div>
             <h4 className="fw-bold text-white mb-0">
               Welcome back, {user?.name?.split(" ")[0]}! 👋
