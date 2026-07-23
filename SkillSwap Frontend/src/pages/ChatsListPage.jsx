@@ -135,8 +135,8 @@ const ChatsListPage = () => {
                     {/* Avatar */}
                     <div className="position-relative flex-shrink-0">
                       <img
-                        src={userImage}
-                        alt={userName}
+                        src={partnerImage}
+                        alt={partnerName}
                         className="rounded-circle ss-profile-avatar"
                         width={40}
                         height={40}

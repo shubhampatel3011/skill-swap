@@ -68,8 +68,13 @@ function setupSocketIO(server) {
     socket.on("sendMessage", async (data) => {
       try {
         const db = new messageTbl();
-        await db.AddMessage(data);
-        io.to(`swap_${data.swapId}`).emit("receiveMessage", data);
+        const result = await db.AddMessage(data);
+        const broadcastData = {
+          ...data,
+          messageId: result?.insertId || Date.now(),
+          createdAt: new Date().toISOString(),
+        };
+        io.to(`swap_${data.swapId}`).emit("receiveMessage", broadcastData);
       } catch (error) {
         console.log(error);
       }

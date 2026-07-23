@@ -8,14 +8,6 @@ const ChatWindow = ({ messages, onSend, partnerName, partnerImage, currentUserId
   const bottomRef = useRef(null);
   const isFirstLoad = useRef(true);
 
-  useEffect(() => {
-    if (isFirstLoad.current) {
-      isFirstLoad.current = false;
-      return;
-    }
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   // Format profile image
   let userImage = partnerImage;
   if (userImage && !userImage.startsWith("http://") && !userImage.startsWith("https://") && !userImage.startsWith("data:")) {

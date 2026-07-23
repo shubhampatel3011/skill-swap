@@ -57,9 +57,6 @@ const ChatPage = () => {
   const getMessages = async () => {
     try {
       const res = await axios.get(`http://localhost:3000/message/${swapId}`, getAuthHeaders());
-      res.data.List.forEach((message) => {
-        socket.emit("joinRoom", message.swapId);
-      });
       const list = res.data.List || [];
       // Normalize DB column names to what ChatWindow expects
       setMessages(
@@ -82,14 +79,29 @@ const ChatPage = () => {
       getMessages();
     }
 
-    socket.emit("joinRoom", swapId);
+    if (swapId) {
+      socket.emit("joinRoom", swapId);
+    }
 
-    socket.on("receiveMessage", (msg) => {
-      setMessages((prev) => [...prev, msg]);
-    });
+    const handleReceiveMessage = (msg) => {
+      // Ignore if sent by current user because optimistic update already added it
+      if (String(msg.senderId) === String(user?.userId)) return;
+
+      const normalizedMsg = {
+        _id: msg.messageId ?? msg.MessageId ?? msg._id ?? `msg_${Date.now()}`,
+        senderId: msg.senderId ?? msg.SenderId,
+        senderName: msg.senderName ?? msg.SenderName ?? "",
+        text: msg.message ?? msg.Message ?? msg.text ?? "",
+        timestamp: msg.createdAt ?? msg.CreatedAt ?? msg.timestamp ?? new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, normalizedMsg]);
+    };
+
+    socket.on("receiveMessage", handleReceiveMessage);
 
     return () => {
-      socket.off("receiveMessage");
+      socket.off("receiveMessage", handleReceiveMessage);
     };
   }, [user, swapId]);
 
@@ -99,7 +111,9 @@ const ChatPage = () => {
   const handleSend = async (text) => {
     if (!user || !swap) return;
     const senderId   = swap.senderId   ?? swap.SenderId;
+    const senderName   = swap.senderName   ?? swap.SenderName;
     const receiverId = swap.receiverId ?? swap.ReceiverId;
+    const receiverName = swap.receiverName ?? swap.ReceiverName;
     const myId       = String(user.userId);
     const partnerId  = String(senderId) === myId ? receiverId : senderId;
 
@@ -189,11 +203,11 @@ const ChatPage = () => {
           <div className="card border-0 shadow-sm mb-3 p-3">
             <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
               <div className="d-flex align-items-center gap-3">
-                <Link to="/swaps" className="btn btn-sm btn-outline-secondary">
+                <Link to="/chats" className="btn btn-sm btn-outline-secondary">
                   <i className="bi bi-arrow-left"></i>
                 </Link>
                 <div>
-                  <h6 className="fw-bold mb-0">Swap Chat with {partnerName}</h6>
+                  <h6 className="fw-bold mb-0">Swapping Chat with {partnerName}</h6>
                   <small className="text-muted">
                     <span className="text-primary">{offeredSkill}</span>
                     {" "}<i className="bi bi-arrow-left-right"></i>{" "}

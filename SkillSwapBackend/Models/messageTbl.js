@@ -6,9 +6,9 @@ class messageTbl {
 
     const [result] = await db.execute(
       `INSERT INTO messageTbl
-      (SwapId, SenderId, ReceiverId, Message)
-      VALUES (?, ?, ?, ?)`,
-      [Model.swapId, Model.senderId, Model.receiverId, Model.message],
+      (SwapId, SenderId, senderName, ReceiverId, receiverName, Message)
+      VALUES (?, ?, ?, ? , ?, ?)`,
+      [Model.swapId, Model.senderId, Model.senderName, Model.receiverId, Model.receiverName, Model.message],
     );
 
     db.end();
