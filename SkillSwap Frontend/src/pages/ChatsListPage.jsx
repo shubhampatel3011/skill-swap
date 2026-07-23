@@ -3,49 +3,64 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 
-const API = "http://localhost:3000";
-
 const ChatsListPage = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [chats, setChats] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [allSkills, setAllSkills] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const getAuthHeaders = () => {
+    const authToken = token || localStorage.getItem("ss_token") || localStorage.getItem("token");
+    return authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : {};
+  };
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/users", getAuthHeaders());
+      setAllUsers(response.data.List || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getSwap = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/swap", getAuthHeaders());
+      const allSwaps = response.data.List || [];
+      const myAccepted = allSwaps.filter((s) => {
+        const senderId   = s.senderId   ?? s.SenderId;
+        const receiverId = s.receiverId ?? s.ReceiverId;
+        const status     = String(s.status ?? s.Status ?? "").toLowerCase();
+        return (
+          status === "accepted" &&
+          (String(senderId) === String(user.userId) ||
+            String(receiverId) === String(user.userId))
+        );
+      });
+      setChats(myAccepted);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!user) return;
-    const fetchAll = async () => {
-      try {
-        const [swapsRes, usersRes] = await Promise.all([
-          axios.get(`${API}/swap`),
-          axios.get(`${API}/users`),
-        ]);
-
-        const allSwaps = swapsRes.data.List || [];
-        const users   = usersRes.data.List || [];
-        setAllUsers(users);
-
-        // Keep only accepted swaps that belong to the logged-in user
-        const myAccepted = allSwaps.filter((s) => {
-          const senderId   = s.senderId   ?? s.SenderId;
-          const receiverId = s.receiverId ?? s.ReceiverId;
-          const status     = String(s.status ?? s.Status ?? "").toLowerCase();
-          return (
-            status === "accepted" &&
-            (String(senderId) === String(user.userId) ||
-              String(receiverId) === String(user.userId))
-          );
-        });
-
-        setChats(myAccepted);
-      } catch (err) {
-        console.error("ChatsListPage fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
+    if (user) {
+      getSwap();
+      getUsers();
+    }
   }, [user]);
+
+  // Format profile image
+  const userName = user?.name || user?.Name || "User";
+  let userImage = user?.profileImage || user?.ProfileImage;
+  if (userImage && !userImage.startsWith("http://") && !userImage.startsWith("https://") && !userImage.startsWith("data:")) {
+    userImage = `http://localhost:3000/uploads/users/${userImage}`;
+  }
+  if (!userImage) {
+    userImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0d9488&color=fff&size=128`;
+  }
 
   const userMap = Object.fromEntries(
     allUsers.map((u) => [String(u.userId ?? u.UserId), u])
@@ -120,11 +135,11 @@ const ChatsListPage = () => {
                     {/* Avatar */}
                     <div className="position-relative flex-shrink-0">
                       <img
-                        src={partnerImage}
-                        alt={partnerName}
-                        className="rounded-circle border border-2 border-success"
-                        width={54}
-                        height={54}
+                        src={userImage}
+                        alt={userName}
+                        className="rounded-circle ss-profile-avatar"
+                        width={40}
+                        height={40}
                       />
                       <span
                         className="position-absolute bottom-0 end-0 bg-success rounded-circle border border-white"

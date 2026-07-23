@@ -6,8 +6,6 @@ import UserCard from "../components/UserCard";
 import { toast } from "react-toastify";
 import axios from "axios";
 
-const API = "http://localhost:3000";
-
 const getLocalDateTimeMin = () => {
   const now = new Date();
   const offsetMs = now.getTimezoneOffset() * 60000;
@@ -41,26 +39,19 @@ const SkillsPage = () => {
   const [scheduledDate, setScheduledDate] = useState("");
   const [sending, setSending] = useState(false);
 
-
-  useEffect(() => {
-    fetchCategories();
-    fetchUsers();
-    fetchSkills();
-  }, []);
-
-  const fetchCategories = async () => {
+  const getCategories = async () => {
     try {
-      const response = await axios.get(`${API}/category`);
+      const response = await axios.get("http://localhost:3000/category");
       setCategories(response.data.List);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const fetchUsers = async () => {
+  const getUsers = async () => {
     try {
       const authToken = token || localStorage.getItem("ss_token");
-      const response = await axios.get(`${API}/users`, {
+      const response = await axios.get("http://localhost:3000/users", {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setAllUsers(response.data.List || response.data || []);
@@ -69,11 +60,11 @@ const SkillsPage = () => {
     }
   };
 
-  const fetchSkills = async () => {
+  const getSkills = async () => {
     try {
       setLoading(true);
       const authToken = token || localStorage.getItem("ss_token");
-      const response = await axios.get(`${API}/skills`, {
+      const response = await axios.get("http://localhost:3000/skills", {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setAllSkills(response.data.List || response.data || []);
@@ -84,11 +75,11 @@ const SkillsPage = () => {
     }
   };
 
-  const fetchMySkills = async () => {
+  const getMySkills = async () => {
     if (!user) return;
     try {
       const authToken = token || localStorage.getItem("ss_token");
-      const res = await axios.get(`${API}/skills/user/${user.userId}`, {
+      const res = await axios.get(`http://localhost:3000/skills/user/${user.userId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setMySkills(
@@ -99,11 +90,16 @@ const SkillsPage = () => {
           profileImage: s.profileImage || "https://ui-avatars.com/api/?name=Your+Skill&background=0d9488&color=fff"
         }))
       );
-    } catch (err) {
-      console.error("Failed to fetch your skills:", err);
+    } catch (error) {
+      console.log(error);
     }
   };
 
+  useEffect(() => {
+    getCategories();
+    getUsers();
+    getSkills();
+  }, []);
 
   let skills = [...allSkills];
   // hide logged in user 
@@ -129,7 +125,7 @@ const SkillsPage = () => {
     setOfferedSkillId("");
     setSwapMessage("");
     setScheduledDate(getLocalDateTimeMin());
-    fetchMySkills();
+    getMySkills();
     setShowModal(true);
   };
 
@@ -139,7 +135,7 @@ const SkillsPage = () => {
     try {
       // 1. Create swap record
       const offeredSkillObj = mySkills.find((s) => String(s._id) === String(offeredSkillId));
-      await axios.post(`${API}/swap`, {
+      await axios.post("http://localhost:3000/swap", {
         senderId: user.userId,
         receiverId: selectedSkill.userId,
         requestedSkillId: selectedSkill._id ?? selectedSkill.skillId,
@@ -152,7 +148,7 @@ const SkillsPage = () => {
       });
 
       // 2. Notify the skill owner
-      await axios.post(`${API}/notification`, {
+      await axios.post("http://localhost:3000/notification", {
         userId: selectedSkill.userId,
         title: "New Swap Request",
         message: `${user.name} sent you a swap request for "${selectedSkill.title || "a skill"}".`,
@@ -161,8 +157,8 @@ const SkillsPage = () => {
 
       toast.success(`Swap request sent for "${selectedSkill.title}"!`);
       setShowModal(false);
-    } catch (err) {
-      console.error("Swap request failed:", err);
+    } catch (error) {
+      console.log(error);
       toast.error("Failed to send swap request. Please try again.");
     } finally {
       setSending(false);

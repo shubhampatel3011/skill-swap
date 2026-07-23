@@ -19,6 +19,10 @@ const categoryRouter = require('./routes/category');
 const subCategoryRouter = require('./routes/subCategory');
 const thirdCategoryRouter = require('./routes/thirdCategory');
 
+var http = require('http');
+const { Server } = require("socket.io");
+const messageTbl = require("./Models/messageTbl");
+
 var app = express();
 
 // view engine setup
@@ -42,8 +46,42 @@ app.use('/feedback', feedbackRouter);
 app.use('/notification', notificationRouter);
 app.use('/category', categoryRouter);
 app.use('/subCategory', subCategoryRouter);
-app.use('/thirdCategory', thirdCategoryRouter)
-app.use("/uploads",express.static(path.join(__dirname,"uploads")))
+app.use('/thirdCategory', thirdCategoryRouter);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Helper function to setup Socket.IO on an HTTP server instance
+function setupSocketIO(server) {
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+    }
+  });
+
+  io.on("connection", (socket) => {
+    console.log("User Connected:", socket.id);
+    socket.on("joinRoom", (swapId) => {
+      socket.join(`swap_${swapId}`);
+      console.log(`Socket ${socket.id} joined room swap_${swapId}`);
+    });
+
+    socket.on("sendMessage", async (data) => {
+      try {
+        const db = new messageTbl();
+        await db.AddMessage(data);
+        io.to(`swap_${data.swapId}`).emit("receiveMessage", data);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      console.log("User Disconnected", socket.id);
+    });
+  });
+
+  return io;
+}
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -60,5 +98,17 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+// If app.js is executed directly (e.g. node app.js or nodemon app.js)
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  const server = http.createServer(app);
+  setupSocketIO(server);
+  server.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+  });
+}
+
+app.setupSocketIO = setupSocketIO;
 
 module.exports = app;

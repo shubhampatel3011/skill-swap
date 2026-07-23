@@ -16,6 +16,15 @@ const ChatWindow = ({ messages, onSend, partnerName, partnerImage, currentUserId
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Format profile image
+  let userImage = partnerImage;
+  if (userImage && !userImage.startsWith("http://") && !userImage.startsWith("https://") && !userImage.startsWith("data:")) {
+    userImage = `http://localhost:3000/uploads/users/${userImage}`;
+  }
+  if (!userImage) {
+    userImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName || "User")}&background=0d9488&color=fff&size=128`;
+  }
+
   const handleSend = (e) => {
     e.preventDefault();
     if (!text.trim()) return;
@@ -30,7 +39,13 @@ const ChatWindow = ({ messages, onSend, partnerName, partnerImage, currentUserId
     <div className="ss-chat-window d-flex flex-column">
       {/* Header */}
       <div className="ss-chat-header d-flex align-items-center gap-3 p-3">
-        <img src={partnerImage} alt={partnerName} className="rounded-circle" width={40} height={40} />
+        <img
+          src={userImage}
+          alt={partnerName || "User"}
+          className="rounded-circle ss-profile-avatar"
+          width={40}
+          height={40}
+        />
         <div>
           <div className="fw-bold text-white">{partnerName}</div>
           <small className="text-success"><i className="bi bi-circle-fill me-1" style={{ fontSize: "8px" }}></i>Active</small>
@@ -50,7 +65,7 @@ const ChatWindow = ({ messages, onSend, partnerName, partnerImage, currentUserId
           return (
             <div key={msg._id} className={`d-flex mb-3 ${isMine ? "justify-content-end" : "justify-content-start"}`}>
               {!isMine && (
-                <img src={partnerImage} alt="" className="rounded-circle me-2 align-self-end" width={28} height={28} />
+                <img src={userImage} alt="" className="rounded-circle me-2 align-self-end" width={28} height={28} />
               )}
               <div className={`ss-chat-bubble ${isMine ? "mine" : "theirs"}`}>
                 <div>{msg.text}</div>

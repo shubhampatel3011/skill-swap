@@ -1,14 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ChatWindow from "../components/ChatWindow";
 import axios from "axios";
-
-const API = "http://localhost:3000";
+import socket from "../socket";
 
 const ChatPage = () => {
   const { swapId } = useParams();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   const [swap, setSwap] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -16,23 +15,31 @@ const ChatPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const getAuthHeaders = () => {
+    const authToken = token || localStorage.getItem("ss_token") || localStorage.getItem("token");
+    return authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : {};
+  };
+
   // Fetch swap details + partner user info
-  const fetchSwap = useCallback(async () => {
+  const getSwap = async () => {
     try {
       const [swapRes, usersRes] = await Promise.all([
-        axios.get(`${API}/swap/${swapId}`),
-        axios.get(`${API}/users`),
+        axios.get(`http://localhost:3000/swap/${swapId}`, getAuthHeaders()),
+        axios.get("http://localhost:3000/users", getAuthHeaders()),
       ]);
 
       const swapData = swapRes.data.Data?.[0] ?? swapRes.data.Data;
-      if (!swapData) { setError("Swap not found."); setLoading(false); return; }
+      if (!swapData) {
+        setError("Swap not found.");
+        setLoading(false);
+        return;
+      }
 
       setSwap(swapData);
 
       const allUsers = usersRes.data.List || [];
       const senderId   = swapData.senderId   ?? swapData.SenderId;
       const receiverId = swapData.receiverId ?? swapData.ReceiverId;
-      const senderName   = swapData.senderName   ?? swapData.SenderName;
       const myId       = String(user?.userId);
       const partnerId  = String(senderId) === myId ? receiverId : senderId;
 
@@ -40,16 +47,19 @@ const ChatPage = () => {
       setPartnerUser(found || null);
     } catch (err) {
       setError("Failed to load chat.");
-      console.error(err);
+      console.log(err);
     } finally {
       setLoading(false);
     }
-  }, [swapId, user]);
+  };
 
   // Fetch messages for this swap
-  const fetchMessages = useCallback(async () => {
+  const getMessages = async () => {
     try {
-      const res = await axios.get(`${API}/message/${swapId}`);
+      const res = await axios.get(`http://localhost:3000/message/${swapId}`, getAuthHeaders());
+      res.data.List.forEach((message) => {
+        socket.emit("joinRoom", message.swapId);
+      });
       const list = res.data.List || [];
       // Normalize DB column names to what ChatWindow expects
       setMessages(
@@ -62,22 +72,26 @@ const ChatPage = () => {
         }))
       );
     } catch (err) {
-      console.error("Failed to load messages:", err);
+      console.log(err);
     }
-  }, [swapId]);
+  };
 
   useEffect(() => {
     if (user) {
-      fetchSwap();
-      fetchMessages();
+      getSwap();
+      getMessages();
     }
-  }, [fetchSwap, fetchMessages, user]);
 
-  // Poll for new messages every 5 seconds while the page is open
-  // useEffect(() => {
-  //   const interval = setInterval(fetchMessages, 5000);
-  //   return () => clearInterval(interval);
-  // }, [fetchMessages]);
+    socket.emit("joinRoom", swapId);
+
+    socket.on("receiveMessage", (msg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    return () => {
+      socket.off("receiveMessage");
+    };
+  }, [user, swapId]);
 
   // Throttle: only send a notification once per 60 s per conversation
   const lastNotifiedRef = useRef(0);
@@ -85,7 +99,6 @@ const ChatPage = () => {
   const handleSend = async (text) => {
     if (!user || !swap) return;
     const senderId   = swap.senderId   ?? swap.SenderId;
-    const senderName   = swap.senderName   ?? swap.SenderName;
     const receiverId = swap.receiverId ?? swap.ReceiverId;
     const myId       = String(user.userId);
     const partnerId  = String(senderId) === myId ? receiverId : senderId;
@@ -102,18 +115,18 @@ const ChatPage = () => {
     ]);
 
     try {
-      await axios.post(`${API}/message`, {
-        swapId:     Number(swapId),
-        senderId:   user.userId,
+      socket.emit("sendMessage", {
+        swapId: Number(swapId),
+        senderId: user.userId,
         receiverId: partnerId,
-        message:    text,
+        message: text,
       });
 
       // Send a notification to the partner (throttled to once per 60 s)
       const now = Date.now();
       if (now - lastNotifiedRef.current > 60_000) {
         lastNotifiedRef.current = now;
-        await axios.post(`${API}/notification`, {
+        await axios.post("http://localhost:3000/notification", {
           userId:  partnerId,
           title:   "New Message",
           message: `${user.name} sent you a message.`,
@@ -122,7 +135,7 @@ const ChatPage = () => {
         });
       }
     } catch (err) {
-      console.error("Failed to send message:", err);
+      console.log(err);
     }
   };
 

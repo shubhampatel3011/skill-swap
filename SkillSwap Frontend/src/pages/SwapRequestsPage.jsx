@@ -5,15 +5,20 @@ import { toast } from "react-toastify";
 import axios from "axios";
 
 const SwapRequestsPage = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [swaps, setSwaps] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [allSkills, setAllSkills] = useState([]);
   const [filter, setFilter] = useState("all");
 
+  const getAuthHeaders = () => {
+    const authToken = token || localStorage.getItem("ss_token") || localStorage.getItem("token");
+    return authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : {};
+  };
+
   const getUsers = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/users");
+      const response = await axios.get("http://localhost:3000/users", getAuthHeaders());
       setAllUsers(response.data.List);
     } catch (error) {
       console.log(error);
@@ -22,7 +27,7 @@ const SwapRequestsPage = () => {
 
   const getSkills = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/skills");
+      const response = await axios.get("http://localhost:3000/skills", getAuthHeaders());
       setAllSkills(response.data.List || []);
     } catch (error) {
       console.log(error);
@@ -31,7 +36,7 @@ const SwapRequestsPage = () => {
 
   const getSwap = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/swap");
+      const response = await axios.get("http://localhost:3000/swap", getAuthHeaders());
       const swap = response.data.List.filter(
         (s) => {
           const { senderId, receiverId } = getSwapUsers(s);
@@ -56,7 +61,8 @@ const SwapRequestsPage = () => {
   const fetchSwaps = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:3000/swap"
+        "http://localhost:3000/swap",
+        getAuthHeaders()
       );
 
       setSwaps(response.data.List);
